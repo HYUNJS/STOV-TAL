@@ -66,6 +66,7 @@ class EGO4DDataset(Dataset):
         assert len(label_dict) == num_classes
         self.data_list = dict_db
         self.label_dict = label_dict
+        print(f"# num data_list: {len(self.data_list)}")
 
         # dataset specific attributes
         self.db_attributes = {

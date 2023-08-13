@@ -9,8 +9,8 @@ from torch.nn import functional as F
 from .datasets import register_dataset
 from .data_utils import truncate_feats
 
-@register_dataset("epic")
-class EpicKitchensDataset(Dataset):
+@register_dataset("egtea")
+class EGTEADataset(Dataset):
     def __init__(
         self,
         is_training,     # if in training mode
@@ -70,10 +70,11 @@ class EpicKitchensDataset(Dataset):
         # dataset specific attributes
         empty_label_ids = self.find_empty_cls(label_dict, num_classes)
         self.db_attributes = {
-            'dataset_name': 'epic-kitchens-100',
+            'dataset_name': 'egtea',
             'tiou_thresholds': np.linspace(0.1, 0.5, 5),
             'empty_label_ids': empty_label_ids
         }
+        print('empty label ids', empty_label_ids)
 
     def find_empty_cls(self, label_dict, num_classes):
         # find categories with out a data sample
@@ -100,7 +101,11 @@ class EpicKitchensDataset(Dataset):
             label_dict = {}
             for key, value in json_db.items():
                 for act in value['annotations']:
-                    label_dict[act['label']] = act['label_id']
+                    # label_dict[act['label']] = act['label_id']
+                    # label_dict[act['label_id']] = act['label_id']
+                    label_dict[act['label_name']] = act['label_id']
+        else:
+            label_dict = self.label_dict
 
         # fill in the db (immutable afterwards)
         dict_db = tuple()
@@ -131,7 +136,9 @@ class EpicKitchensDataset(Dataset):
                 for idx, act in enumerate(value['annotations']):
                     segments[idx][0] = act['segment'][0]
                     segments[idx][1] = act['segment'][1]
-                    labels[idx] = label_dict[act['label']]
+                    # labels[idx] = label_dict[act['label']]
+                    # labels[idx] = label_dict[act['label_id']]
+                    labels[idx] = label_dict[act['label_name']]
             else:
                 segments = None
                 labels = None

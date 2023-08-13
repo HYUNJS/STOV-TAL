@@ -1,19 +1,21 @@
-dataset_name: thumos_old
-train_split: ['validation']
-val_split: ['test']
+dataset_name: thumos
+train_split: ['training']
+val_split: ['validation']
 dataset: {
-  json_file: ./data/thumos/annotations/thumos14.json,
-  feat_folder: ./data/thumos/i3d_features,
+  # json_file: ./data/thumos14/annotations/training_K400_tal.json,
+  json_file: ./data/thumos14/annotations/validation_K400_tal.json,
+  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_clip_trainval,
   file_prefix: ~,
   file_ext: .npy,
-  num_classes: 20,
-  input_dim: 2048,
+  num_classes: 12,
+  input_dim: 512,
   feat_stride: 4,
   num_frames: 16,
   # serve as data augmentation
   trunc_thresh: 0.5,
   crop_ratio: [0.9, 1.0],
   max_seq_len: 2304,
+  default_fps: 30,
 }
 model: {
   fpn_type: identity,

@@ -9,8 +9,8 @@ from torch.nn import functional as F
 from .datasets import register_dataset
 from .data_utils import truncate_feats
 
-@register_dataset("thumos")
-class THUMOS14Dataset(Dataset):
+@register_dataset("thumos_old")
+class THUMOS14Dataset_Old(Dataset):
     def __init__(
         self,
         is_training,     # if in training mode
@@ -55,15 +55,14 @@ class THUMOS14Dataset(Dataset):
         self.max_seq_len = max_seq_len
         self.trunc_thresh = trunc_thresh
         self.num_classes = num_classes
-        # self.label_dict = None
+        self.label_dict = None
         self.crop_ratio = crop_ratio
 
         # load database and select the subset
-        # dict_db, label_dict = self._load_json_db(self.json_file)
-        # assert len(label_dict) == num_classes
-        # self.label_dict = label_dict
-        dict_db = self._load_json_db(self.json_file)
+        dict_db, label_dict = self._load_json_db(self.json_file)
+        assert len(label_dict) == num_classes
         self.data_list = dict_db
+        self.label_dict = label_dict
 
         # dataset specific attributes
         self.db_attributes = {
@@ -82,12 +81,12 @@ class THUMOS14Dataset(Dataset):
             json_data = json.load(fid)
         json_db = json_data['database']
 
-        # # if label_dict is not available
-        # if self.label_dict is None:
-        #     label_dict = {}
-        #     for key, value in json_db.items():
-        #         for act in value['annotations']:
-        #             label_dict[act['label']] = act['label_id']
+        # if label_dict is not available
+        if self.label_dict is None:
+            label_dict = {}
+            for key, value in json_db.items():
+                for act in value['annotations']:
+                    label_dict[act['label']] = act['label_id']
 
         # fill in the db (immutable afterwards)
         dict_db = tuple()
@@ -122,7 +121,8 @@ class THUMOS14Dataset(Dataset):
                 segments, labels = [], []
                 for act in value['annotations']:
                     segments.append(act['segment'])
-                    labels.append([act['label_id']])
+                    labels.append([label_dict[act['label']]])
+                    labels.append([label_dict[act['label']]])
 
                 segments = np.asarray(segments, dtype=np.float32)
                 labels = np.squeeze(np.asarray(labels, dtype=np.int64), axis=1)
@@ -136,8 +136,7 @@ class THUMOS14Dataset(Dataset):
                          'labels' : labels
             }, )
 
-        # return dict_db, label_dict
-        return dict_db
+        return dict_db, label_dict
 
     def __len__(self):
         return len(self.data_list)

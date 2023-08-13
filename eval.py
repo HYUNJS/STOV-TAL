@@ -115,7 +115,7 @@ if __name__ == '__main__':
                         help='path to a config file')
     parser.add_argument('ckpt', type=str, metavar='DIR',
                         help='path to a checkpoint')
-    parser.add_argument('-epoch', type=int, default=-1,
+    parser.add_argument('-e', '--epoch', type=int, default=-1,
                         help='checkpoint epoch')
     parser.add_argument('-t', '--topk', default=-1, type=int,
                         help='max number of output actions (default: -1)')

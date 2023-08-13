@@ -427,11 +427,13 @@ def valid_one_epoch(
         # call the evaluator
         _, mAP, _ = evaluator.evaluate(results, verbose=True)
     else:
+        mAP = 0.0
+
+    if output_file is not None:
         # dump to a pickle file that can be directly used for evaluation
         with open(output_file, "wb") as f:
             pickle.dump(results, f)
-        mAP = 0.0
-
+            
     # log mAP to tb_writer
     if tb_writer is not None:
         tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)

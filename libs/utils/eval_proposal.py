@@ -141,7 +141,8 @@ class ANETdetection(object):
         label_offset=0,
         num_workers=8,
         dataset_name=None,
-        label_filepath=None
+        label_filepath=None,
+        cls_agnostic_flag=False
     ):
 
         self.tiou_thresholds = tiou_thresholds
@@ -276,7 +277,7 @@ class ANETdetection(object):
 
         return prop_recallx, prop_recall
 
-    def evaluate_proposal(self, preds):
+    def evaluate_proposal(self, preds, verbose=False):
         if isinstance(preds, pd.DataFrame):
             assert 'label' in preds
         elif isinstance(preds, str) and os.path.isfile(preds):
@@ -293,10 +294,16 @@ class ANETdetection(object):
             })
 
         prop_recallx, prop_recall = self.eval_cls_agnostic(preds)
+        prop_Rxs, prop_Rs = prop_recallx * 100, prop_recall * 100
+        if verbose:
+            prop_rec1x, prop_rec5x = prop_Rxs[0, 0], prop_Rxs[0, 1]
+            prop_rec100, prop_rec300, prop_rec1000 = prop_Rs[0, 1], prop_Rs[0, 2], prop_Rs[0, 3]
+            print(f'    pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
+                f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f} | #preds: {len(preds)}')
 
-        return prop_recallx * 100, prop_recall * 100
+        return prop_Rxs, prop_Rs
 
-    def evaluate(self, preds, verbose=True, tgt_cls_arr=None):
+    def evaluate(self, preds, verbose=True, tgt_cls_arr=None, eval_agnostic=False):
         """Evaluates a prediction file. For the detection task we measure the
         interpolated mean average precision to measure the performance of a
         method.
@@ -325,7 +332,8 @@ class ANETdetection(object):
         preds['label'] = preds['label'].replace(self.activity_index)
 
         ap, recallx, recall = self.eval_mAP(preds)
-        prop_recallx, prop_recall = self.eval_cls_agnostic(preds)
+        if eval_agnostic:
+            prop_recallx, prop_recall = self.eval_cls_agnostic(preds)
 
         self.ap, self.recallx, self.recall = ap, recallx, recall
 
@@ -393,8 +401,10 @@ class ANETdetection(object):
         # return the results
         # return mAP, average_mAP, mRecall
         # return average_mAP*100, mRecallx*100, mRecall*100
-        # return mAP*100, mRecallx*100, mRecall*100
-        return mAP*100, mRecallx*100, mRecall*100, prop_recallx*100, prop_recall*100
+        if eval_agnostic:
+            return mAP*100, mRecallx*100, mRecall*100, prop_recallx*100, prop_recall*100
+        else:
+            return mAP*100, mRecallx*100, mRecall*100
 
 
 

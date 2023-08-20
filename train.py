@@ -18,7 +18,7 @@ from libs.datasets import make_dataset, make_data_loader
 from libs.modeling import make_meta_arch
 from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection,
                         save_checkpoint, make_optimizer, make_scheduler,
-                        fix_random_seed, ModelEma)
+                        fix_random_seed, ModelEma, ANETdetectionProp)
 from tqdm import tqdm
 
 ################################################################################
@@ -79,10 +79,11 @@ def main(args):
             val_dataset, False, None, 1, cfg['loader']['num_workers']
         )
         val_db_vars = val_dataset.get_attributes()
-        det_eval = ANETdetection(
+        det_eval = ANETdetectionProp(
             val_dataset.json_file,
             val_dataset.split[0],
-            tiou_thresholds = val_db_vars['tiou_thresholds']
+            tiou_thresholds = val_db_vars['tiou_thresholds'],
+            dataset_name=cfg['dataset_name'], num_workers=16,
         )
 
     """3. create model, optimizer, and scheduler"""
@@ -149,7 +150,7 @@ def main(args):
             print_freq=args.print_freq
         )
         if run_val:
-            mAP = valid_one_epoch(
+            _ = valid_one_epoch(
                 val_loader,
                 model,
                 epoch,
@@ -158,9 +159,9 @@ def main(args):
                 ext_score_file=cfg['test_cfg']['ext_score_file'],
                 tb_writer=tb_writer,
                 print_freq=args.print_freq,
-                verbose=False
+                verbose=False,
+                cls_agnostic=cfg['dataset']['class_agnostic'],
             )
-            print(f"[EP {epoch+1}/{max_epochs}] - mAP: {mAP*100:.3f}")
         
         # save ckpt once in a while
         if (

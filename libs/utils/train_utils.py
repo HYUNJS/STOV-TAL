@@ -367,7 +367,8 @@ def valid_one_epoch(
     tb_writer = None,
     print_freq = 20,
     return_output = False,
-    verbose=True
+    verbose=True,
+    cls_agnostic=False,
 ):
     """Test the model on the validation set"""
     # either evaluate the results or save the results
@@ -428,9 +429,14 @@ def valid_one_epoch(
         if ext_score_file is not None and isinstance(ext_score_file, str):
             results = postprocess_results(results, ext_score_file)
         # call the evaluator
-        _, mAP, _ = evaluator.evaluate(results, verbose=True)
+        if cls_agnostic:
+            prop_Rxs, prop_Rs = evaluator.evaluate_proposal(results, verbose=True)
+            eval_metrics = prop_Rxs, prop_Rs
+        else:
+            _, mAP, _ = evaluator.evaluate(results, verbose=True)
+            eval_metrics = mAP
     else:
-        mAP = 0.0
+        eval_metrics = 0.0
 
     if output_file is not None:
         # dump to a pickle file that can be directly used for evaluation
@@ -439,13 +445,26 @@ def valid_one_epoch(
             
     # log mAP to tb_writer
     if tb_writer is not None:
-        tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
+        if cls_agnostic:
+            prop_rec1x, prop_rec5x = prop_Rxs[0, 0], prop_Rxs[0, 1]
+            prop_rec100, prop_rec300, prop_rec1000 = prop_Rs[0, 1], prop_Rs[0, 2], prop_Rs[0, 3]
+            tb_writer.add_scalar('validation/pR@1x', prop_rec1x, curr_epoch)
+            tb_writer.add_scalar('validation/pR@5x', prop_rec5x, curr_epoch)
+            tb_writer.add_scalar('validation/pR@100', prop_rec100, curr_epoch)
+            tb_writer.add_scalar('validation/pR@300', prop_rec300, curr_epoch)
+            tb_writer.add_scalar('validation/pR@1000', prop_rec100, curr_epoch)
+            print(f'[EP {curr_epoch+1}] - pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
+                  f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f}')
+        else:
+            tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
+            print(f"[EP {curr_epoch+1}] - mAP: {mAP*100:.3f}")
+            
 
     if return_output:
         results = format_pkl2json(results, 0)
         return results
 
-    return mAP
+    return eval_metrics
 
 def format_pkl2json(results, thresh):
     ## read output

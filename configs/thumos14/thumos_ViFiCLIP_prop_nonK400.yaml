@@ -1,13 +1,14 @@
-dataset_name: thumos
+dataset_name: thumos14
 train_split: ['training']
 val_split: ['validation']
 dataset: {
-  # json_file: ./data/thumos14/annotations/training_tal.json,
-  json_file: ./data/thumos14/annotations/validation_tal.json,
-  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_clip_trainval,
+  train_json_file: ./data/thumos14/annotations/training_nonK400_tal.json,
+  val_json_file: ./data/thumos14/annotations/validation_nonK400_tal.json,
+  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
+  class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
-  num_classes: 20,
+  num_classes: 1,
   input_dim: 512,
   feat_stride: 4,
   num_frames: 16,
@@ -46,6 +47,9 @@ test_cfg: {
   # multiclass_nms: False,
   # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
   # comment out L47-48 and uncomment L50 to disable score fusion
-  multiclass_nms: True,
+  multiclass_nms: False,
 }
-output_folder: ./ckpt/
+output_folder: ./ckpt/cls_agnostic
+# ckpt_folder: ./ckpt/cls_agnostic/thumos_ViFiCLIP_prop_nonK400_1/
+# ckpt_folder: ./ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/
+ckpt_folder: ./ckpt/cls_agnostic/thumos_ViFiCLIP_prop_nonK400_1/

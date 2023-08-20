@@ -9,7 +9,7 @@ from torch.nn import functional as F
 from .datasets import register_dataset
 from .data_utils import truncate_feats
 
-@register_dataset("thumos")
+@register_dataset("thumos14")
 class THUMOS14Dataset(Dataset):
     def __init__(
         self,
@@ -17,6 +17,8 @@ class THUMOS14Dataset(Dataset):
         split,           # split, a tuple/list allowing concat of subsets
         feat_folder,     # folder for features
         json_file,       # json file for annotations
+        train_json_file,       # json file for annotations
+        val_json_file,       # json file for annotations
         feat_stride,     # temporal stride of the feats
         num_frames,      # number of frames for each feat
         default_fps,     # default fps
@@ -28,8 +30,12 @@ class THUMOS14Dataset(Dataset):
         num_classes,     # number of action categories
         file_prefix,     # feature file prefix if any
         file_ext,        # feature file extension if any
-        force_upsampling # force to upsample to max_seq_len
+        force_upsampling, # force to upsample to max_seq_len
+        class_agnostic,   # load in class-anostic manner
     ):
+        if json_file == '':
+            json_file = train_json_file if 'training' in split else val_json_file
+            print(f'split: {split} | filepath: {json_file}')
         # file path
         assert os.path.exists(feat_folder) and os.path.exists(json_file)
         assert isinstance(split, tuple) or isinstance(split, list)
@@ -57,7 +63,8 @@ class THUMOS14Dataset(Dataset):
         self.num_classes = num_classes
         # self.label_dict = None
         self.crop_ratio = crop_ratio
-
+        self.class_agnostic = class_agnostic
+        
         # load database and select the subset
         # dict_db, label_dict = self._load_json_db(self.json_file)
         # assert len(label_dict) == num_classes
@@ -82,15 +89,9 @@ class THUMOS14Dataset(Dataset):
             json_data = json.load(fid)
         json_db = json_data['database']
 
-        # # if label_dict is not available
-        # if self.label_dict is None:
-        #     label_dict = {}
-        #     for key, value in json_db.items():
-        #         for act in value['annotations']:
-        #             label_dict[act['label']] = act['label_id']
-
         # fill in the db (immutable afterwards)
         dict_db = tuple()
+        num_annos = 0
         for key, value in json_db.items():
             # skip the video if not in the split
             if value['subset'].lower() not in self.split:
@@ -121,11 +122,14 @@ class THUMOS14Dataset(Dataset):
                 # our code can now handle this corner case
                 segments, labels = [], []
                 for act in value['annotations']:
-                    segments.append(act['segment'])
-                    labels.append([act['label_id']])
+                    segm = act['segment']
+                    label_id = 0 if self.class_agnostic else act['label_id']
+                    segments.append(segm)
+                    labels.append([label_id])
 
                 segments = np.asarray(segments, dtype=np.float32)
                 labels = np.squeeze(np.asarray(labels, dtype=np.int64), axis=1)
+                num_annos += len(labels)
             else:
                 segments = None
                 labels = None
@@ -135,8 +139,8 @@ class THUMOS14Dataset(Dataset):
                          'segments' : segments,
                          'labels' : labels
             }, )
+        print(f"# video: {len(dict_db)} | # annos: {num_annos}")
 
-        # return dict_db, label_dict
         return dict_db
 
     def __len__(self):

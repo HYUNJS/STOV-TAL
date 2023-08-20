@@ -19,7 +19,7 @@ from libs.modeling import make_meta_arch
 from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection,
                         save_checkpoint, make_optimizer, make_scheduler,
                         fix_random_seed, ModelEma)
-
+from tqdm import tqdm
 
 ################################################################################
 def main(args):
@@ -68,6 +68,22 @@ def main(args):
     # data loaders
     train_loader = make_data_loader(
         train_dataset, True, rng_generator, **cfg['loader'])
+    run_val = cfg['train_cfg']['run_val']
+    if run_val:
+        ## val dataset
+        val_dataset = make_dataset(
+            cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset']
+        )
+        # set bs = 1, and disable shuffle
+        val_loader = make_data_loader(
+            val_dataset, False, None, 1, cfg['loader']['num_workers']
+        )
+        val_db_vars = val_dataset.get_attributes()
+        det_eval = ANETdetection(
+            val_dataset.json_file,
+            val_dataset.split[0],
+            tiou_thresholds = val_db_vars['tiou_thresholds']
+        )
 
     """3. create model, optimizer, and scheduler"""
     # model
@@ -119,7 +135,7 @@ def main(args):
         'early_stop_epochs',
         cfg['opt']['epochs'] + cfg['opt']['warmup_epochs']
     )
-    for epoch in range(args.start_epoch, max_epochs):
+    for epoch in tqdm(range(args.start_epoch, max_epochs), desc='outer loop', leave=True):
         # train for one epoch
         train_one_epoch(
             train_loader,
@@ -132,7 +148,20 @@ def main(args):
             tb_writer=tb_writer,
             print_freq=args.print_freq
         )
-
+        if run_val:
+            mAP = valid_one_epoch(
+                val_loader,
+                model,
+                epoch,
+                evaluator=det_eval,
+                output_file=None,
+                ext_score_file=cfg['test_cfg']['ext_score_file'],
+                tb_writer=tb_writer,
+                print_freq=args.print_freq,
+                verbose=False
+            )
+            print(f"[EP {epoch+1}/{max_epochs}] - mAP: {mAP*100:.3f}")
+        
         # save ckpt once in a while
         if (
             ((epoch + 1) == max_epochs) or
@@ -166,7 +195,7 @@ if __name__ == '__main__':
       description='Train a point-based transformer for action localization')
     parser.add_argument('config', metavar='DIR',
                         help='path to a config file')
-    parser.add_argument('-p', '--print-freq', default=10, type=int,
+    parser.add_argument('-p', '--print-freq', default=20, type=int,
                         help='print frequency (default: 10 iterations)')
     parser.add_argument('-c', '--ckpt-freq', default=5, type=int,
                         help='checkpoint frequency (default: every 5 epochs)')

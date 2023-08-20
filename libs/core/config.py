@@ -11,6 +11,10 @@ DEFAULTS = {
     "val_split": ('validation', ),
     "model_name": "LocPointTransformer",
     "dataset": {
+        'json_file': '',
+        'train_json_file': '',
+        'val_json_file': '',
+        'class_agnostic': False,
         # temporal stride of the feats
         "feat_stride": 16,
         # number of frames for each feat
@@ -97,6 +101,7 @@ DEFAULTS = {
         "droppath": 0.1,
         # if to use label smoothing (>0.0)
         "label_smoothing": 0.0,
+        "run_val": False
     },
     "test_cfg": {
         "pre_nms_thresh": 0.001,
@@ -128,7 +133,8 @@ DEFAULTS = {
         # in #epochs excluding warmup
         "schedule_steps": [],
         "schedule_gamma": 0.1,
-    }
+    },
+    "ckpt_folder": ''
 }
 
 def _merge(src, dst):

@@ -3,6 +3,7 @@ import shutil
 import time
 import pickle
 
+from tqdm import tqdm
 import numpy as np
 import random
 from copy import deepcopy
@@ -269,7 +270,7 @@ def train_one_epoch(
     # main training loop
     print("\n[Train]: Epoch {:d} started".format(curr_epoch))
     start = time.time()
-    for iter_idx, video_list in enumerate(train_loader, 0):
+    for iter_idx, video_list in enumerate(tqdm(train_loader), 0):
         # zero out optim
         optimizer.zero_grad(set_to_none=True)
         # forward / backward the model
@@ -364,11 +365,13 @@ def valid_one_epoch(
     evaluator = None,
     output_file = None,
     tb_writer = None,
-    print_freq = 20
+    print_freq = 20,
+    return_output = False,
+    verbose=True
 ):
     """Test the model on the validation set"""
     # either evaluate the results or save the results
-    assert (evaluator is not None) or (output_file is not None)
+    assert (evaluator is not None) or (output_file is not None) or return_output
 
     # set up meters
     batch_time = AverageMeter()
@@ -385,7 +388,7 @@ def valid_one_epoch(
 
     # loop over validation set
     start = time.time()
-    for iter_idx, video_list in enumerate(val_loader, 0):
+    for iter_idx, video_list in enumerate(tqdm(val_loader), 0):
         # forward the model (wo. grad)
         with torch.no_grad():
             output = model(video_list)
@@ -404,7 +407,7 @@ def valid_one_epoch(
                     results['score'].append(output[vid_idx]['scores'])
 
         # printing
-        if (iter_idx != 0) and iter_idx % (print_freq) == 0:
+        if verbose and (iter_idx != 0) and iter_idx % (print_freq) == 0:
             # measure elapsed time (sync all kernels)
             torch.cuda.synchronize()
             batch_time.update((time.time() - start) / print_freq)
@@ -438,4 +441,30 @@ def valid_one_epoch(
     if tb_writer is not None:
         tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
 
+    if return_output:
+        results = format_pkl2json(results, 0)
+        return results
+
     return mAP
+
+def format_pkl2json(results, thresh):
+    ## read output
+    vids = results['video-id']
+    starts = results['t-start']
+    ends = results['t-end']
+    labels = results['label']
+    scores = results['score']
+
+    ## convert format
+    conv_results = {}
+    for i in range(len(vids)):
+        if vids[i] not in conv_results:
+            conv_results[vids[i]] = []
+        if scores[i] >= thresh:
+            conv_results[vids[i]].append({'label_id': int(labels[i]),
+                                          'segment': [float(starts[i]), float(ends[i])],
+                                          'score': float(scores[i])
+                                          })
+    pred_results_format = {'results': conv_results}
+    
+    return pred_results_format

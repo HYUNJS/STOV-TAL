@@ -456,7 +456,7 @@ def valid_one_epoch(
             print(f'[EP {curr_epoch+1}] - pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
                   f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f}')
         else:
-            tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
+            tb_writer.add_scalar('validation/mAP', mAP*100, curr_epoch)
             print(f"[EP {curr_epoch+1}] - mAP: {mAP*100:.3f}")
             
 

@@ -433,7 +433,7 @@ def valid_one_epoch(
             prop_Rxs, prop_Rs = evaluator.evaluate_proposal(results, verbose=True)
             eval_metrics = prop_Rxs, prop_Rs
         else:
-            mAPs, mRecallxs, mRecalls = evaluator.evaluate_(results, verbose=True)
+            mAPs, mRecallxs, mRecalls = evaluator.evaluate_mAP(results, verbose=True)
             eval_metrics = mAPs, mRecallxs, mRecalls
     else:
         eval_metrics = 0.0
@@ -445,16 +445,23 @@ def valid_one_epoch(
             
     # log mAP to tb_writer
     if tb_writer is not None:
+        tiou0, tiou1 = evaluator.tiou_thresholds[0], evaluator.tiou_thresholds[-1]
+        tiou_idx = -1
+        for idx, tiou in enumerate(evaluator.tiou_thresholds):
+            if tiou == 0.5:
+                tiou_idx = idx
+        assert tiou_idx != -1
+        
         if cls_agnostic:
-            prop_rec1x, prop_rec5x = prop_Rxs[0, 0], prop_Rxs[0, 1]
-            prop_rec100, prop_rec300, prop_rec1000 = prop_Rs[0, 1], prop_Rs[0, 2], prop_Rs[0, 3]
-            tb_writer.add_scalar('validation/pR@1x', prop_rec1x, curr_epoch)
-            tb_writer.add_scalar('validation/pR@5x', prop_rec5x, curr_epoch)
-            tb_writer.add_scalar('validation/pR@100', prop_rec100, curr_epoch)
-            tb_writer.add_scalar('validation/pR@300', prop_rec300, curr_epoch)
-            tb_writer.add_scalar('validation/pR@1000', prop_rec100, curr_epoch)
-            print(f'[EP {curr_epoch+1}] - pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
-                  f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f}')
+            pR1x, pR5x = prop_Rxs[tiou_idx, 0], prop_Rxs[tiou_idx, 1]
+            pR10, pR100, pR300, pR1000 = prop_Rs[tiou_idx, 0], prop_Rs[tiou_idx, 1], prop_Rs[tiou_idx, 2], prop_Rs[tiou_idx, 3]
+            tb_writer.add_scalar('validation/pR@1x', pR1x, curr_epoch)
+            tb_writer.add_scalar('validation/pR@5x', pR5x, curr_epoch)
+            tb_writer.add_scalar('validation/pR@10', pR10, curr_epoch)
+            tb_writer.add_scalar('validation/pR@100', pR100, curr_epoch)
+            tb_writer.add_scalar('validation/pR@300', pR300, curr_epoch)
+            tb_writer.add_scalar('validation/pR@1000', pR1000, curr_epoch)
+            print(f'[EP {curr_epoch+1}] - pR@1x: {pR1x:.3f} | pR@5x: {pR5x:.3f} | pR@100: {pR100:.3f} | pR@1000: {pR1000:.3f}')
         else:
             tiou0, tiou1 = evaluator.tiou_thresholds[0], evaluator.tiou_thresholds[-1]
             tiou_idx = -1
@@ -465,21 +472,16 @@ def valid_one_epoch(
             
             avg_mAP = mAPs.mean()
             mAP = mAPs[tiou_idx]
-            mR1x = mRecallxs[tiou_idx, 0]
-            mR5x = mRecallxs[tiou_idx, 1]
-            mR10 = mRecalls[tiou_idx, 0]
-            mR100 = mRecalls[tiou_idx, 1]
-            mR300 = mRecalls[tiou_idx, 2]
-            mR1000 = mRecalls[tiou_idx, 3]
-                    
+            mR1x, mR5x = mRecallxs[tiou_idx, 0], mRecallxs[tiou_idx, 1]
+            mR10, mR100, mR300, mR1000 = mRecalls[tiou_idx, 0], mRecalls[tiou_idx, 1], mRecalls[tiou_idx, 2], mRecalls[tiou_idx, 3]
             tb_writer.add_scalar('validation/avg_mAP', avg_mAP, curr_epoch)
             tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
-            tb_writer.add_scalar('validation/mR1x', mR1x, curr_epoch)
-            tb_writer.add_scalar('validation/mR5x', mR5x, curr_epoch)
-            tb_writer.add_scalar('validation/mR10', mR10, curr_epoch)
-            tb_writer.add_scalar('validation/mR100', mR100, curr_epoch)
-            tb_writer.add_scalar('validation/mR300', mR300, curr_epoch)
-            tb_writer.add_scalar('validation/mR1000', mR1000, curr_epoch)
+            tb_writer.add_scalar('validation/mR@1x', mR1x, curr_epoch)
+            tb_writer.add_scalar('validation/mR@5x', mR5x, curr_epoch)
+            tb_writer.add_scalar('validation/mR@10', mR10, curr_epoch)
+            tb_writer.add_scalar('validation/mR@100', mR100, curr_epoch)
+            tb_writer.add_scalar('validation/mR@300', mR300, curr_epoch)
+            tb_writer.add_scalar('validation/mR@1000', mR1000, curr_epoch)
 
     if return_output:
         results = format_pkl2json(results, 0)

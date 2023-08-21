@@ -463,18 +463,9 @@ def valid_one_epoch(
             tb_writer.add_scalar('validation/pR@1000', pR1000, curr_epoch)
             print(f'[EP {curr_epoch+1}] - pR@1x: {pR1x:.3f} | pR@5x: {pR5x:.3f} | pR@100: {pR100:.3f} | pR@1000: {pR1000:.3f}')
         else:
-            tiou0, tiou1 = evaluator.tiou_thresholds[0], evaluator.tiou_thresholds[-1]
-            tiou_idx = -1
-            for idx, tiou in enumerate(evaluator.tiou_thresholds):
-                if tiou == 0.5:
-                    tiou_idx = idx
-            assert tiou_idx != -1
-            
-            avg_mAP = mAPs.mean()
             mAP = mAPs[tiou_idx]
             mR1x, mR5x = mRecallxs[tiou_idx, 0], mRecallxs[tiou_idx, 1]
             mR10, mR100, mR300, mR1000 = mRecalls[tiou_idx, 0], mRecalls[tiou_idx, 1], mRecalls[tiou_idx, 2], mRecalls[tiou_idx, 3]
-            tb_writer.add_scalar('validation/avg_mAP', avg_mAP, curr_epoch)
             tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
             tb_writer.add_scalar('validation/mR@1x', mR1x, curr_epoch)
             tb_writer.add_scalar('validation/mR@5x', mR5x, curr_epoch)

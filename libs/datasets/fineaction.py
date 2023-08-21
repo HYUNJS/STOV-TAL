@@ -31,7 +31,8 @@ class FineActionDataset(Dataset):
         file_prefix,     # feature file prefix if any
         file_ext,        # feature file extension if any
         force_upsampling, # force to upsample to max_seq_len
-        class_agnostic,   # load in class-anostic manner
+        class_agnostic,   # load in class-anostic manner,
+        tiou_thresholds,
     ):
         if json_file == '':
             json_file = train_json_file if 'training' in split else val_json_file
@@ -75,7 +76,7 @@ class FineActionDataset(Dataset):
         # dataset specific attributes
         self.db_attributes = {
             'dataset_name': 'fineaction',
-            'tiou_thresholds': np.linspace(0.3, 0.7, 5),
+            'tiou_thresholds': tiou_thresholds,
             # we will mask out cliff diving
             'empty_label_ids': [],
         }

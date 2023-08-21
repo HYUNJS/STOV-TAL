@@ -1,5 +1,6 @@
 data/
 ckpt/
+ckpt_old/
 pretrained/
 exp/
 libs/utils/dist

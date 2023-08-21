@@ -302,6 +302,42 @@ class ANETdetection(object):
                 f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f} | #preds: {len(preds)}')
 
         return prop_Rxs, prop_Rs
+    
+    def evaluate_mAP(self, preds, verbose=False, tgt_cls_arr=None):
+        if isinstance(preds, pd.DataFrame):
+            assert 'label' in preds
+        elif isinstance(preds, str) and os.path.isfile(preds):
+            preds = load_pred_seg_from_json(preds)
+        elif isinstance(preds, Dict):
+            # move to pd dataframe
+            # did not check dtype here, can accept both numpy / pytorch tensors
+            preds = pd.DataFrame({
+                'video-id' : preds['video-id'],
+                't-start' : preds['t-start'].tolist(),
+                't-end': preds['t-end'].tolist(),
+                'label': preds['label'].tolist(),
+                'score': preds['score'].tolist()
+            })
+
+        ap, recallx, recall = self.eval_cls_specific(preds)
+        if tgt_cls_arr is not None:
+            self.ap = self.ap[..., tgt_cls_arr]
+            self.recallx = self.recallx[..., tgt_cls_arr]
+            self.recall = self.recall[..., tgt_cls_arr]
+        else:
+            self.ap, self.recallx, self.recall = ap, recallx, recall
+        mAP = self.ap.mean(axis=1) * 100
+        mRecallx = self.recallx.mean(axis=2) * 100
+        mRecall = self.recall.mean(axis=2) * 100
+        if verbose:
+            avg_mAP = mAP.mean()
+            for idx, tiou in enumerate(self.tiou_thresholds):
+                if tiou == 0.5:
+                    mAP_50 = mAP[idx]
+            
+            print(f'    mAP@0.5: {mAP_50:.3f} | mAP@{self.tiou_thresholds[0]}:{self.tiou_thresholds[-1]}: {avg_mAP:.3f}')
+
+        return mAP, mRecallx, mRecall
 
     def evaluate(self, preds, verbose=True, tgt_cls_arr=None, eval_agnostic=False):
         """Evaluates a prediction file. For the detection task we measure the
@@ -331,7 +367,7 @@ class ANETdetection(object):
         # make the label ids consistent
         preds['label'] = preds['label'].replace(self.activity_index)
 
-        ap, recallx, recall = self.eval_mAP(preds)
+        ap, recallx, recall = self.eval_cls_specific(preds)
         if eval_agnostic:
             prop_recallx, prop_recall = self.eval_cls_agnostic(preds)
 
@@ -674,7 +710,8 @@ def run_mRec_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, 
         gt_filepath,
         split,
         tiou_thresholds=tiou_thresholds,
-        dataset_name=dataset, num_workers=num_workers
+        dataset_name=dataset, num_workers=num_workers,
+        top_k=[100, 300, 1000]
     )
 
     if pred_filepath.endswith('.pkl'):

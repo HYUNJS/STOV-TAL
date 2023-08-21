@@ -79,20 +79,13 @@ def main(args):
             val_dataset, False, None, 1, cfg['loader']['num_workers']
         )
         val_db_vars = val_dataset.get_attributes()
-        if cfg['dataset']['class_agnostic']:
-            det_eval = ANETdetectionProp(
-                val_dataset.json_file,
-                val_dataset.split[0],
-                tiou_thresholds = val_db_vars['tiou_thresholds'],
-                dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
-            )
-        else:
-            det_eval = ANETdetection(
-                val_dataset.json_file,
-                val_dataset.split[0],
-                tiou_thresholds = val_db_vars['tiou_thresholds'],
-                dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
-            )
+        det_eval = ANETdetectionProp(
+            val_dataset.json_file,
+            val_dataset.split[0],
+            tiou_thresholds = val_db_vars['tiou_thresholds'],
+            dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
+            top_k=[10, 100, 300, 1000], top_kx=[1, 5]
+        )
 
     """3. create model, optimizer, and scheduler"""
     # model

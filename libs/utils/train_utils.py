@@ -433,8 +433,8 @@ def valid_one_epoch(
             prop_Rxs, prop_Rs = evaluator.evaluate_proposal(results, verbose=True)
             eval_metrics = prop_Rxs, prop_Rs
         else:
-            _, mAP, _ = evaluator.evaluate(results, verbose=True)
-            eval_metrics = mAP
+            mAPs, mRecallxs, mRecalls = evaluator.evaluate_(results, verbose=True)
+            eval_metrics = mAPs, mRecallxs, mRecalls
     else:
         eval_metrics = 0.0
 
@@ -456,9 +456,30 @@ def valid_one_epoch(
             print(f'[EP {curr_epoch+1}] - pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
                   f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f}')
         else:
-            tb_writer.add_scalar('validation/mAP', mAP*100, curr_epoch)
-            print(f"[EP {curr_epoch+1}] - mAP: {mAP*100:.3f}")
+            tiou0, tiou1 = evaluator.tiou_thresholds[0], evaluator.tiou_thresholds[-1]
+            tiou_idx = -1
+            for idx, tiou in enumerate(evaluator.tiou_thresholds):
+                if tiou == 0.5:
+                    tiou_idx = idx
+            assert tiou_idx != -1
             
+            avg_mAP = mAPs.mean()
+            mAP = mAPs[tiou_idx]
+            mR1x = mRecallxs[tiou_idx, 0]
+            mR5x = mRecallxs[tiou_idx, 1]
+            mR10 = mRecalls[tiou_idx, 0]
+            mR100 = mRecalls[tiou_idx, 1]
+            mR300 = mRecalls[tiou_idx, 2]
+            mR1000 = mRecalls[tiou_idx, 3]
+                    
+            tb_writer.add_scalar('validation/avg_mAP', avg_mAP, curr_epoch)
+            tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
+            tb_writer.add_scalar('validation/mR1x', mR1x, curr_epoch)
+            tb_writer.add_scalar('validation/mR5x', mR5x, curr_epoch)
+            tb_writer.add_scalar('validation/mR10', mR10, curr_epoch)
+            tb_writer.add_scalar('validation/mR100', mR100, curr_epoch)
+            tb_writer.add_scalar('validation/mR300', mR300, curr_epoch)
+            tb_writer.add_scalar('validation/mR1000', mR1000, curr_epoch)
 
     if return_output:
         results = format_pkl2json(results, 0)

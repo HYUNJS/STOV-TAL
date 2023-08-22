@@ -131,6 +131,7 @@ DEFAULTS = {
         "warmup": True,
         "warmup_epochs": 5,
         "schedule_type": "cosine",
+        "eta_min": 1e-8,
         # in #epochs excluding warmup
         "schedule_steps": [],
         "schedule_gamma": 0.1,

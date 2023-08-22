@@ -131,6 +131,7 @@ def make_scheduler(
     return a supported scheduler
     All scheduler returned by this function should step every iteration
     """
+    eta_min = optimizer_config['eta_min']
     if optimizer_config["warmup"]:
         max_epochs = optimizer_config["epochs"] + optimizer_config["warmup_epochs"]
         max_steps = max_epochs * num_iters_per_epoch
@@ -146,7 +147,8 @@ def make_scheduler(
                 optimizer,
                 warmup_steps,
                 max_steps,
-                last_epoch=last_epoch
+                last_epoch=last_epoch,
+                eta_min=eta_min
             )
 
         elif optimizer_config["schedule_type"] == "multistep":
@@ -157,7 +159,8 @@ def make_scheduler(
                 warmup_steps,
                 steps,
                 gamma=optimizer_config["schedule_gamma"],
-                last_epoch=last_epoch
+                last_epoch=last_epoch,
+                eta_min=eta_min
             )
         else:
             raise TypeError("Unsupported scheduler!")
@@ -172,7 +175,8 @@ def make_scheduler(
             scheduler = optim.lr_scheduler.CosineAnnealingLR(
                 optimizer,
                 max_steps,
-                last_epoch=last_epoch
+                last_epoch=last_epoch,
+                eta_min=eta_min
             )
 
         elif optimizer_config["schedule_type"] == "multistep":
@@ -181,8 +185,9 @@ def make_scheduler(
             scheduler = optim.lr_scheduler.MultiStepLR(
                 optimizer,
                 steps,
-                gamma=schedule_config["gamma"],
-                last_epoch=last_epoch
+                gamma=optimizer_config["schedule_gamma"],
+                last_epoch=last_epoch,
+                eta_min=eta_min
             )
         else:
             raise TypeError("Unsupported scheduler!")

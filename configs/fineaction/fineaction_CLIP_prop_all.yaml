@@ -4,10 +4,11 @@ val_split: ['validation']
 dataset: {
   train_json_file: ./data/fineaction/annotations/training_tal.json,
   val_json_file: ./data/fineaction/annotations/validation_tal.json,
-  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_vificlip_trainval,
+  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_clip_trainval,
+  class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
-  num_classes: 106,
+  num_classes: 1,
   input_dim: 512,
   feat_stride: 4,
   num_frames: 16,
@@ -50,6 +51,6 @@ test_cfg: {
   # multiclass_nms: False,
   # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
   # comment out L47-48 and uncomment L50 to disable score fusion
-  multiclass_nms: True,
+  multiclass_nms: False,
 }
-output_folder: ./ckpt/cls_aware
+output_folder: ./ckpt/cls_agnostic

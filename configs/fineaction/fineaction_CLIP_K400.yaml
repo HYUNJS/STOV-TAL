@@ -27,7 +27,7 @@ opt: {
   epochs: 3,
   weight_decay: 0.05,
   warmup_epochs: 5,
-  eta_min: 1e-5 # 1e-8
+  eta_min: 0.00001 # 1e-8
 }
 loader: {
   batch_size: 2,

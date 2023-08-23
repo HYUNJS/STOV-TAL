@@ -4,6 +4,7 @@ import os
 import time
 import datetime
 from pprint import pprint
+import os.path as osp
 
 # torch imports
 import torch
@@ -16,7 +17,7 @@ from torch.utils.tensorboard import SummaryWriter
 from libs.core import load_config
 from libs.datasets import make_dataset, make_data_loader
 from libs.modeling import make_meta_arch
-from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection,
+from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection, valid_one_epoch, valid_proposal_all_splits,
                         save_checkpoint, make_optimizer, make_scheduler,
                         fix_random_seed, ModelEma, ANETdetectionProp)
 from tqdm import tqdm
@@ -70,22 +71,43 @@ def main(args):
         train_dataset, True, rng_generator, **cfg['loader'])
     run_val = cfg['train_cfg']['run_val']
     if run_val:
-        ## val dataset
-        val_dataset = make_dataset(
-            cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset']
-        )
-        # set bs = 1, and disable shuffle
-        val_loader = make_data_loader(
-            val_dataset, False, None, 1, cfg['loader']['num_workers']
-        )
-        val_db_vars = val_dataset.get_attributes()
-        det_eval = ANETdetectionProp(
-            val_dataset.json_file,
-            val_dataset.split[0],
-            tiou_thresholds = val_db_vars['tiou_thresholds'],
-            dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
-            top_k=[10, 100, 300, 1000], top_kx=[1, 5]
-        )
+        val_bs = 1
+        val_file_list = cfg['dataset']['val_file_list']
+        if len(val_file_list) != 0:
+            val_loader_list, det_eval_list, split_name_list = [], [], []
+            for val_filename in val_file_list:
+                if val_filename == 'validation_tal.json':
+                    split_name = 'val_all'
+                elif val_filename == 'validation_K400_tal.json':
+                    split_name = 'val_K400'
+                elif val_filename == 'validation_nonK400_tal.json':
+                    split_name = 'val_nonK400'
+                else:
+                    raise NotImplementedError(f"{val_filename} is not the case")
+                    
+                split_name_list.append(split_name)
+                cfg['dataset']['val_json_file'] = osp.join(cfg['dataset']['val_file_dir'], val_filename)
+                val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
+                val_loader = make_data_loader(val_dataset, False, None, val_bs, cfg['loader']['num_workers'])
+                det_eval = ANETdetectionProp(
+                    val_dataset.json_file,
+                    val_dataset.split[0],
+                    tiou_thresholds = val_dataset.tiou_thresholds,
+                    dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
+                    top_k=[10, 100, 300, 1000], top_kx=[1, 5]
+                )
+                val_loader_list.append(val_loader)
+                det_eval_list.append(det_eval)
+        else:
+            val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
+            val_loader = make_data_loader(val_dataset, False, None, val_bs, cfg['loader']['num_workers'])
+            det_eval = ANETdetectionProp(
+                val_dataset.json_file,
+                val_dataset.split[0],
+                tiou_thresholds = val_dataset.tiou_thresholds,
+                dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
+                top_k=[10, 100, 300, 1000], top_kx=[1, 5]
+                )
 
     """3. create model, optimizer, and scheduler"""
     # model
@@ -151,18 +173,30 @@ def main(args):
             print_freq=args.print_freq
         )
         if run_val:
-            _ = valid_one_epoch(
-                val_loader,
-                model,
-                epoch,
-                evaluator=det_eval,
-                output_file=None,
-                ext_score_file=cfg['test_cfg']['ext_score_file'],
-                tb_writer=tb_writer,
-                print_freq=args.print_freq,
-                verbose=False,
-                cls_agnostic=cfg['dataset']['class_agnostic'],
-            )
+            if val_file_list != 0:
+                _ = valid_proposal_all_splits(
+                    val_loader_list,
+                    model,
+                    epoch,
+                    evaluator_list=det_eval_list,
+                    output_file=None,
+                    ext_score_file=cfg['test_cfg']['ext_score_file'],
+                    tb_writer=tb_writer,
+                    split_name_list=split_name_list,
+                )                
+            else:
+                _ = valid_one_epoch(
+                    val_loader,
+                    model,
+                    epoch,
+                    evaluator=det_eval,
+                    output_file=None,
+                    ext_score_file=cfg['test_cfg']['ext_score_file'],
+                    tb_writer=tb_writer,
+                    print_freq=args.print_freq,
+                    verbose=False,
+                    cls_agnostic=cfg['dataset']['class_agnostic'],
+                )
         
         # save ckpt once in a while
         if (
@@ -197,7 +231,7 @@ if __name__ == '__main__':
       description='Train a point-based transformer for action localization')
     parser.add_argument('config', metavar='DIR',
                         help='path to a config file')
-    parser.add_argument('-p', '--print-freq', default=20, type=int,
+    parser.add_argument('-p', '--print-freq', default=100, type=int,
                         help='print frequency (default: 10 iterations)')
     parser.add_argument('-c', '--ckpt-freq', default=5, type=int,
                         help='checkpoint frequency (default: every 5 epochs)')

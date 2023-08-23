@@ -33,6 +33,7 @@ class FineActionDataset(Dataset):
         force_upsampling, # force to upsample to max_seq_len
         class_agnostic,   # load in class-anostic manner,
         tiou_thresholds,
+        **kwargs,
     ):
         if json_file == '':
             json_file = train_json_file if 'training' in split else val_json_file
@@ -65,7 +66,8 @@ class FineActionDataset(Dataset):
         # self.label_dict = None
         self.crop_ratio = crop_ratio
         self.class_agnostic = class_agnostic
-
+        self.tiou_thresholds = tiou_thresholds
+        
         # load database and select the subset
         # dict_db, label_dict = self._load_json_db(self.json_file)
         # assert len(label_dict) == num_classes

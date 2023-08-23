@@ -14,6 +14,8 @@ DEFAULTS = {
         'json_file': '',
         'train_json_file': '',
         'val_json_file': '',
+        'val_file_dir': '',
+        'val_file_list': [],
         'class_agnostic': False,
         # temporal stride of the feats
         "feat_stride": 16,

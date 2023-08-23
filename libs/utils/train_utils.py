@@ -336,53 +336,32 @@ def train_one_epoch(
                     global_step
                 )
 
-            # print to terminal
-            block1 = 'Epoch: [{:03d}][{:05d}/{:05d}]'.format(
-                curr_epoch, iter_idx, num_iters
-            )
-            block2 = 'Time {:.2f} ({:.2f})'.format(
-                batch_time.val, batch_time.avg
-            )
-            block3 = 'Loss {:.2f} ({:.2f})\n'.format(
-                losses_tracker['final_loss'].val,
-                losses_tracker['final_loss'].avg
-            )
-            block4 = ''
-            for key, value in losses_tracker.items():
-                if key != "final_loss":
-                    block4  += '\t{:s} {:.2f} ({:.2f})'.format(
-                        key, value.val, value.avg
-                    )
+            # # print to terminal
+            # block1 = 'Epoch: [{:03d}][{:05d}/{:05d}]'.format(
+            #     curr_epoch, iter_idx, num_iters
+            # )
+            # block2 = 'Time {:.2f} ({:.2f})'.format(
+            #     batch_time.val, batch_time.avg
+            # )
+            # block3 = 'Loss {:.2f} ({:.2f})\n'.format(
+            #     losses_tracker['final_loss'].val,
+            #     losses_tracker['final_loss'].avg
+            # )
+            # block4 = ''
+            # for key, value in losses_tracker.items():
+            #     if key != "final_loss":
+            #         block4  += '\t{:s} {:.2f} ({:.2f})'.format(
+            #             key, value.val, value.avg
+            #         )
 
-            print('\t'.join([block1, block2, block3, block4]))
+            # print('\t'.join([block1, block2, block3, block4]))
 
-    # finish up and print
-    lr = scheduler.get_last_lr()[0]
-    print("[Train]: Epoch {:d} finished with lr={:.8f}\n".format(curr_epoch, lr))
+    # # finish up and print
+    # lr = scheduler.get_last_lr()[0]
+    # print("[Train]: Epoch {:d} finished with lr={:.8f}\n".format(curr_epoch, lr))
     return
 
-
-def valid_one_epoch(
-    val_loader,
-    model,
-    curr_epoch,
-    ext_score_file = None,
-    evaluator = None,
-    output_file = None,
-    tb_writer = None,
-    print_freq = 20,
-    return_output = False,
-    verbose=True,
-    cls_agnostic=False,
-):
-    """Test the model on the validation set"""
-    # either evaluate the results or save the results
-    assert (evaluator is not None) or (output_file is not None) or return_output
-
-    # set up meters
-    batch_time = AverageMeter()
-    # switch to evaluate mode
-    model.eval()
+def forward_validation(model, val_loader):
     # dict for results (for our evaluation code)
     results = {
         'video-id': [],
@@ -392,8 +371,6 @@ def valid_one_epoch(
         'score': []
     }
 
-    # loop over validation set
-    start = time.time()
     for iter_idx, video_list in enumerate(tqdm(val_loader), 0):
         # forward the model (wo. grad)
         with torch.no_grad():
@@ -411,79 +388,155 @@ def valid_one_epoch(
                     results['t-end'].append(output[vid_idx]['segments'][:, 1])
                     results['label'].append(output[vid_idx]['labels'])
                     results['score'].append(output[vid_idx]['scores'])
+    
+    return results
 
-        # printing
-        if verbose and (iter_idx != 0) and iter_idx % (print_freq) == 0:
-            # measure elapsed time (sync all kernels)
-            torch.cuda.synchronize()
-            batch_time.update((time.time() - start) / print_freq)
-            start = time.time()
-
-            # print timing
-            print('Test: [{0:05d}/{1:05d}]\t'
-                  'Time {batch_time.val:.2f} ({batch_time.avg:.2f})'.format(
-                  iter_idx, len(val_loader), batch_time=batch_time))
-
-    # gather all stats and evaluate
-    results['t-start'] = torch.cat(results['t-start']).numpy()
-    results['t-end'] = torch.cat(results['t-end']).numpy()
-    results['label'] = torch.cat(results['label']).numpy()
-    results['score'] = torch.cat(results['score']).numpy()
-
+def evaluator_validation(results, evaluator, ext_score_file, cls_agnostic):
     if evaluator is not None:
         if ext_score_file is not None and isinstance(ext_score_file, str):
             results = postprocess_results(results, ext_score_file)
         # call the evaluator
         if cls_agnostic:
             prop_Rxs, prop_Rs = evaluator.evaluate_proposal(results, verbose=True)
-            eval_metrics = prop_Rxs, prop_Rs
+            eval_metrics = (prop_Rxs, prop_Rs)
         else:
             mAPs, mRecallxs, mRecalls = evaluator.evaluate_mAP(results, verbose=True)
-            eval_metrics = mAPs, mRecallxs, mRecalls
+            eval_metrics = (mAPs, mRecallxs, mRecalls)
     else:
         eval_metrics = 0.0
+    
+    return eval_metrics
 
+def log_eval_results(tb_writer, evaluator, eval_metrics, cls_agnostic, curr_epoch, split_name):
+    tiou_idx = -1
+    for idx, tiou in enumerate(evaluator.tiou_thresholds):
+        if tiou == 0.5:
+            tiou_idx = idx
+            break
+    assert tiou_idx != -1
+    
+    if cls_agnostic:
+        prop_Rxs, prop_Rs = eval_metrics
+        pR1x, pR5x = prop_Rxs[tiou_idx, 0], prop_Rxs[tiou_idx, 1]
+        pR10, pR100, pR300, pR1000 = prop_Rs[tiou_idx, 0], prop_Rs[tiou_idx, 1], prop_Rs[tiou_idx, 2], prop_Rs[tiou_idx, 3]
+        tb_writer.add_scalar(f'{split_name}/pR@1x', pR1x, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/pR@5x', pR5x, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/pR@10', pR10, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/pR@100', pR100, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/pR@300', pR300, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/pR@1000', pR1000, curr_epoch)
+    else:
+        mAPs, mRecallxs, mRecalls = eval_metrics
+        mAP = mAPs[tiou_idx]
+        mR1x, mR5x = mRecallxs[tiou_idx, 0], mRecallxs[tiou_idx, 1]
+        mR10, mR100, mR300, mR1000 = mRecalls[tiou_idx, 0], mRecalls[tiou_idx, 1], mRecalls[tiou_idx, 2], mRecalls[tiou_idx, 3]
+        tb_writer.add_scalar(f'{split_name}/mAP', mAP, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/mR@1x', mR1x, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/mR@5x', mR5x, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/mR@10', mR10, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/mR@100', mR100, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/mR@300', mR300, curr_epoch)
+        tb_writer.add_scalar(f'{split_name}/mR@1000', mR1000, curr_epoch)
+
+def valid_one_epoch(
+    val_loader,
+    model,
+    curr_epoch,
+    ext_score_file = None,
+    evaluator = None,
+    output_file = None,
+    tb_writer = None,
+    print_freq = 20,
+    return_output = False,
+    verbose=True,
+    cls_agnostic=False,
+    split_name='validation'
+):
+    """Test the model on the validation set"""
+    # either evaluate the results or save the results
+    assert (evaluator is not None) or (output_file is not None) or return_output
+
+    # switch to evaluate mode
+    model.eval()
+
+    # gather all stats and evaluate
+    results = forward_validation(model, val_loader)
+    results['t-start'] = torch.cat(results['t-start']).numpy()
+    results['t-end'] = torch.cat(results['t-end']).numpy()
+    results['label'] = torch.cat(results['label']).numpy()
+    results['score'] = torch.cat(results['score']).numpy()
+
+    # run evaluator
+    eval_metrics = evaluator_validation(results, evaluator, ext_score_file, cls_agnostic)
+
+    # dump to a pickle file that can be directly used for evaluation
     if output_file is not None:
-        # dump to a pickle file that can be directly used for evaluation
         with open(output_file, "wb") as f:
             pickle.dump(results, f)
             
     # log mAP to tb_writer
     if tb_writer is not None:
-        tiou0, tiou1 = evaluator.tiou_thresholds[0], evaluator.tiou_thresholds[-1]
-        tiou_idx = -1
-        for idx, tiou in enumerate(evaluator.tiou_thresholds):
-            if tiou == 0.5:
-                tiou_idx = idx
-        assert tiou_idx != -1
-        
-        if cls_agnostic:
-            pR1x, pR5x = prop_Rxs[tiou_idx, 0], prop_Rxs[tiou_idx, 1]
-            pR10, pR100, pR300, pR1000 = prop_Rs[tiou_idx, 0], prop_Rs[tiou_idx, 1], prop_Rs[tiou_idx, 2], prop_Rs[tiou_idx, 3]
-            tb_writer.add_scalar('validation/pR@1x', pR1x, curr_epoch)
-            tb_writer.add_scalar('validation/pR@5x', pR5x, curr_epoch)
-            tb_writer.add_scalar('validation/pR@10', pR10, curr_epoch)
-            tb_writer.add_scalar('validation/pR@100', pR100, curr_epoch)
-            tb_writer.add_scalar('validation/pR@300', pR300, curr_epoch)
-            tb_writer.add_scalar('validation/pR@1000', pR1000, curr_epoch)
-            print(f'[EP {curr_epoch+1}] - pR@1x: {pR1x:.3f} | pR@5x: {pR5x:.3f} | pR@100: {pR100:.3f} | pR@1000: {pR1000:.3f}')
-        else:
-            mAP = mAPs[tiou_idx]
-            mR1x, mR5x = mRecallxs[tiou_idx, 0], mRecallxs[tiou_idx, 1]
-            mR10, mR100, mR300, mR1000 = mRecalls[tiou_idx, 0], mRecalls[tiou_idx, 1], mRecalls[tiou_idx, 2], mRecalls[tiou_idx, 3]
-            tb_writer.add_scalar('validation/mAP', mAP, curr_epoch)
-            tb_writer.add_scalar('validation/mR@1x', mR1x, curr_epoch)
-            tb_writer.add_scalar('validation/mR@5x', mR5x, curr_epoch)
-            tb_writer.add_scalar('validation/mR@10', mR10, curr_epoch)
-            tb_writer.add_scalar('validation/mR@100', mR100, curr_epoch)
-            tb_writer.add_scalar('validation/mR@300', mR300, curr_epoch)
-            tb_writer.add_scalar('validation/mR@1000', mR1000, curr_epoch)
-
+        log_eval_results(tb_writer, evaluator, eval_metrics, cls_agnostic, curr_epoch, split_name)
+    
+    # output tal results in json format
     if return_output:
-        results = format_pkl2json(results, 0)
+        results = format_pkl2json(results, 0.0)
         return results
 
     return eval_metrics
+
+def valid_proposal_all_splits(
+    val_loader_list,
+    model,
+    curr_epoch,
+    ext_score_file = None,
+    evaluator_list = None,
+    output_file = None,
+    tb_writer = None,
+    return_output = False,
+    split_name_list=None
+):
+    """Test the model on the validation set"""
+    # either evaluate the results or save the results
+    assert (evaluator_list is not None) or (output_file is not None) or return_output
+
+    # switch to evaluate mode
+    model.eval()
+
+    eval_metrics_list, results_list = [], []
+    for i in range(len(val_loader_list)):
+        val_loader = val_loader_list[i]
+        evaluator = evaluator_list[i]
+        split_name = split_name_list[i]
+        
+        # gather all stats and evaluate
+        results = forward_validation(model, val_loader)
+        results['t-start'] = torch.cat(results['t-start']).numpy()
+        results['t-end'] = torch.cat(results['t-end']).numpy()
+        results['label'] = torch.cat(results['label']).numpy()
+        results['score'] = torch.cat(results['score']).numpy()
+
+        # run evaluator
+        eval_metrics = evaluator_validation(results, evaluator, ext_score_file, True)
+        eval_metrics_list.append(eval_metrics)
+        
+        # dump to a pickle file that can be directly used for evaluation
+        if output_file is not None:
+            with open(f'{output_file}.{split_name}', "wb") as f:
+                pickle.dump(results, f)
+                
+        # log mAP to tb_writer
+        if tb_writer is not None:
+            log_eval_results(tb_writer, evaluator, eval_metrics, True, curr_epoch, split_name)
+        
+        # output tal results in json format
+        if return_output:
+            results = format_pkl2json(results, 0.0)
+            results_list.append(results)
+    
+    if return_output:
+        return results_list
+    return eval_metrics_list
 
 def format_pkl2json(results, thresh):
     ## read output

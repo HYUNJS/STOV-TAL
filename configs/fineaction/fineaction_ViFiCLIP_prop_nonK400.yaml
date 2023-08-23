@@ -4,7 +4,7 @@ val_split: ['validation']
 dataset: {
   train_json_file: ./data/fineaction/annotations/training_nonK400_tal.json,
   val_json_file: ./data/fineaction/annotations/validation_nonK400_tal.json,
-  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_vificlip_trainval,
+  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   val_file_dir: './data/fineaction/annotations/',
   val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
   class_agnostic: True,

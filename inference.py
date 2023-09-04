@@ -44,6 +44,7 @@ def main(args):
             ckpt_file_list = sorted(glob.glob(os.path.join(ckpt_folder, '*.pth.tar')))
             ckpt_file = ckpt_file_list[-1]
         assert os.path.exists(ckpt_file)
+        print("Load ", ckpt_file)
 
     if args.topk > 0:
         cfg['model']['test_cfg']['max_seg_num'] = args.topk
@@ -112,7 +113,7 @@ def main(args):
     
     tiou_thresholds = [0.5]
     score_thresh = 0.0
-    dataset_name = 'thumos14'
+    dataset_name = cfg['dataset_name']
     _, _, results_dict = run_mRec_eval(val_dataset.json_file, proposal_filepath, tiou_thresholds, score_thresh,
                                        dataset_name, num_workers=8, split=cfg['val_split'][0])
     

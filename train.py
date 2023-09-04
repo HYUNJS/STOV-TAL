@@ -173,7 +173,7 @@ def main(args):
             print_freq=args.print_freq
         )
         if run_val:
-            if val_file_list != 0:
+            if len(val_file_list) != 0:
                 _ = valid_proposal_all_splits(
                     val_loader_list,
                     model,
@@ -233,7 +233,9 @@ if __name__ == '__main__':
                         help='path to a config file')
     parser.add_argument('-p', '--print-freq', default=100, type=int,
                         help='print frequency (default: 10 iterations)')
-    parser.add_argument('-c', '--ckpt-freq', default=5, type=int,
+    # parser.add_argument('-c', '--ckpt-freq', default=5, type=int,
+    #                     help='checkpoint frequency (default: every 5 epochs)')
+    parser.add_argument('-c', '--ckpt-freq', default=1, type=int,
                         help='checkpoint frequency (default: every 5 epochs)')
     parser.add_argument('--output', default='', type=str,
                         help='name of exp folder (default: none)')

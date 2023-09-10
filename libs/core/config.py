@@ -24,6 +24,11 @@ DEFAULTS = {
                 'all': './data/fineaction/annotations/fineaction_labels.csv',
                 'K400': './data/fineaction/annotations/fineaction_K400_overlap_labels.csv',
                 'nonK400': './data/fineaction/annotations/fineaction_K400_nonoverlap_labels.csv',
+            },
+            'anet13': {
+                'all': './data/anet13/annotations/anet13_labels.csv',
+                'K400': './data/anet13/annotations/anet13_K400_overlap_labels.csv',
+                'nonK400': './data/anet13/annotations/anet13_K400_nonoverlap_labels.csv',
             }
         },
         'val_json_file': '',

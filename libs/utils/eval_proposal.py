@@ -167,16 +167,10 @@ class ANETdetection(object):
         self.ground_truth['label']=self.ground_truth['label'].replace(self.activity_index)
 
     def _get_act_id2name(self, label_filepath):
-        if self.dataset_name == 'thumos14':
-            if label_filepath is None:
-                label_filepath = '/root/datasets/thumos14/annotations/thumos14_labels.csv'
-            label_mapper = pd.read_csv(label_filepath)
-            self.act_id2name = {row['id']: row['name'] for _, row in label_mapper.iterrows()}
-        elif self.dataset_name == 'fineaction':
-            if label_filepath is None:
-                label_filepath = '/root/datasets/fineaction/annotations/fineaction_labels.csv'
-            label_mapper = pd.read_csv(label_filepath)
-            self.act_id2name = {row['id']: row['name'] for _, row in label_mapper.iterrows()}
+        if label_filepath is None:
+            label_filepath = f'./data/{self.dataset_name}/annotations/{self.dataset_name}_labels.csv'
+        label_mapper = pd.read_csv(label_filepath)
+        self.act_id2name = {row['id']: row['name'] for _, row in label_mapper.iterrows()}
 
     def _get_predictions_with_label(self, prediction_by_label, label_name, cidx):
         """Get all predicitons of the given label. Return empty DataFrame if there

@@ -33,7 +33,7 @@ def main(args):
         cfg = load_config(args.config)
     else:
         raise ValueError("Config file does not exist.")
-    pprint(cfg)
+    # pprint(cfg)
 
     # prep for output folder (based on time stamp)
     if not os.path.exists(cfg['output_folder']):

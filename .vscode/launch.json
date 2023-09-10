@@ -1,0 +1,17 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "anet13 train",
+            "type": "python",
+            "request": "launch",
+            "program": "/root/code/actionformer-prop/train.py",
+            "console": "integratedTerminal",
+            "args": "configs/anet13/anet_vifi_all.yaml -c 5 --output 1",
+            "justMyCode": true
+        }
+    ]
+}

@@ -10,7 +10,9 @@ dataset: {
   train_json_file: ./data/anet13/annotations/training_K400_tal.json,
   val_json_file: ./data/anet13/annotations/validation_K400_tal.json,
   feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s16F_ep10_trainval,
+  val_file_dir: './data/anet13/annotations/',
   val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
+  class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
   num_classes: 1,
@@ -36,8 +38,12 @@ model: {
   use_abs_pe: True,
 }
 opt: {
-  learning_rate: 0.001,
-  epochs: 10,
+  ## ver1
+  # learning_rate: 0.001,
+  # epochs: 10,
+  ## ver2
+  learning_rate: 0.0001,
+  epochs: 20,
   weight_decay: 0.05,
 }
 loader: {

@@ -7,11 +7,11 @@ dataset_name: anet13
 train_split: ['training']
 val_split: ['validation']
 dataset: {
-  train_json_file: ./data/anet13/annotations/training_tal.json,
-  val_json_file: ./data/anet13/annotations/validation_tal.json,
+  train_json_file: ./data/anet13/annotations/train_50_test_50/training_50-4_tal.json,
+  val_json_file: ./data/anet13/annotations/train_50_test_50/validation_50-4_tal.json,
   feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s16F_ep10_trainval,
-  val_file_dir: './data/anet13/annotations/',
-  val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
+  val_file_dir: './data/anet13/annotations/train_50_test_50',
+  val_file_list: ['validation_50-4_tal.json', 'validation_non50-4_tal.json'],
   class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
@@ -38,16 +38,13 @@ model: {
   use_abs_pe: True,
 }
 opt: {
-  ## ver1
-  # learning_rate: 0.001,
-  # epochs: 10,
-  ## ver2
-  learning_rate: 0.0001,
-  epochs: 20,
+  learning_rate: 0.001,
+  epochs: 3,
   weight_decay: 0.05,
 }
 loader: {
   batch_size: 16,
+  num_workers: 4,
 }
 train_cfg: {
   init_loss_norm: 200,
@@ -75,4 +72,4 @@ test_cfg: {
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-output_folder: ./ckpt/cls_agnostic
+output_folder: ./ckpt/cls_agnostic_50

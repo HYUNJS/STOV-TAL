@@ -6,16 +6,14 @@
 dataset_name: anet13
 train_split: ['training']
 val_split: ['validation']
+split_name: 'K400'
 dataset: {
-  train_json_file: ./data/anet13/annotations/training_tal.json,
-  val_json_file: ./data/anet13/annotations/validation_tal.json,
+  train_json_file: ./data/anet13/annotations/training_K400_tal.json,
+  val_json_file: ./data/anet13/annotations/validation_K400_tal.json,
   feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s16F_ep10_trainval,
-  val_file_dir: './data/anet13/annotations/',
-  val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
-  class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
-  num_classes: 1,
+  num_classes: 200,
   input_dim: 512,
   feat_stride: 16,
   num_frames: 16,
@@ -36,6 +34,12 @@ model: {
   fpn_dim: 256,
   head_dim: 256,
   use_abs_pe: True,
+  ## CLIP prompt
+  CLIP_cls: True,
+  CLIP_dim: 512,
+  CLIP_backbone_name: ViT-B/16,
+  prompt_n_ctx: 0,
+  CLIP_weight: ./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth,
 }
 opt: {
   ## ver1
@@ -69,10 +73,10 @@ test_cfg: {
   max_seg_num: 100,
   min_score: 0.001,
   # score fusion
-  multiclass_nms: False,
-  # multiclass_nms: True,
+  # multiclass_nms: False,
+  multiclass_nms: True,
   nms_sigma : 0.75,
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-output_folder: ./ckpt/cls_agnostic
+output_folder: ./ckpt/ANET_prompt

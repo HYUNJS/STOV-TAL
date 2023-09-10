@@ -82,6 +82,12 @@ def main(args):
                     split_name = 'val_K400'
                 elif val_filename == 'validation_nonK400_tal.json':
                     split_name = 'val_nonK400'
+                elif '50-' in val_filename:
+                    split_cfg = val_filename.split('_')[1]
+                    split_name = f'val_{split_cfg}'
+                elif '75-' in val_filename:
+                    split_cfg = val_filename.split('_')[1]
+                    split_name = f'val_{split_cfg}'
                 else:
                     raise NotImplementedError(f"{val_filename} is not the case")
                     

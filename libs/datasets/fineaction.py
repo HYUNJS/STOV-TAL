@@ -33,6 +33,7 @@ class FineActionDataset(Dataset):
         force_upsampling, # force to upsample to max_seq_len
         class_agnostic,   # load in class-anostic manner,
         tiou_thresholds,
+        root_dir,
         **kwargs,
     ):
         if json_file == '':

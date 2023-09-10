@@ -1,6 +1,8 @@
 import os
 import json
 import numpy as np
+import pandas as pd
+import os.path as osp
 
 import torch
 from torch.utils.data import Dataset
@@ -33,6 +35,7 @@ class THUMOS14Dataset(Dataset):
         force_upsampling, # force to upsample to max_seq_len
         class_agnostic,   # load in class-anostic manner
         tiou_thresholds,
+        root_dir,
         **kwargs,
     ):
         if json_file == '':
@@ -68,6 +71,15 @@ class THUMOS14Dataset(Dataset):
         self.class_agnostic = class_agnostic
         self.tiou_thresholds = tiou_thresholds
         
+        # load vinfo
+        vinfo = pd.read_csv(osp.join(root_dir, 'thumos14/vinfo.csv'))
+        self.use_i3d = 'i3d' in feat_folder
+        if self.use_i3d:
+            self.vid2fps_dict = {}
+            for i in range(len(vinfo)):
+                vid, fps = vinfo.loc[i, ['video_id', 'ori_fps']]
+                self.vid2fps_dict[vid] = fps
+                
         # load database and select the subset
         # dict_db, label_dict = self._load_json_db(self.json_file)
         # assert len(label_dict) == num_classes

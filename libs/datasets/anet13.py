@@ -35,6 +35,7 @@ class ActivityNetDataset(Dataset):
         force_upsampling,  # force to upsample to max_seq_len
         class_agnostic,
         tiou_thresholds,
+        root_dir,
         **kwargs,
     ):
         if json_file == '':

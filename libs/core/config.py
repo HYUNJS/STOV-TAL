@@ -12,6 +12,7 @@ DEFAULTS = {
     'split_name': 'all',
     "model_name": "LocPointTransformer",
     "dataset": {
+        'root_dir': './data',
         'json_file': '',
         'train_json_file': '',
         'label_filepaths': {

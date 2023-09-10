@@ -9,10 +9,23 @@ DEFAULTS = {
     "devices": ['cuda:0'], # default: single gpu
     "train_split": ('training', ),
     "val_split": ('validation', ),
+    'split_name': 'all',
     "model_name": "LocPointTransformer",
     "dataset": {
         'json_file': '',
         'train_json_file': '',
+        'label_filepaths': {
+            'thumos14': {
+                'all': './data/thumos14/annotations/thumos14_labels.csv',
+                'K400': './data/thumos14/annotations/thumos14_K400_overlap_labels.csv',
+                'nonK400': './data/thumos14/annotations/thumos14_K400_nonoverlap_labels.csv',
+            },
+            'fineaction': {
+                'all': './data/fineaction/annotations/fineaction_labels.csv',
+                'K400': './data/fineaction/annotations/fineaction_K400_overlap_labels.csv',
+                'nonK400': './data/fineaction/annotations/fineaction_K400_nonoverlap_labels.csv',
+            }
+        },
         'val_json_file': '',
         'val_file_dir': '',
         'val_file_list': [],
@@ -86,6 +99,13 @@ DEFAULTS = {
         "use_abs_pe": False,
         # use rel position encoding (added to self-attention)
         "use_rel_pe": False,
+        # classifier with CLIP
+        "CLIP_cls": False,
+        "CLIP_dim": 512,
+        "CLIP_backbone_name": "ViT-B/16",
+        "prompt_n_ctx": 0,
+        "CLIP_softmax": False,
+        "CLIP_weight": 'clip',
     },
     "train_cfg": {
         # radius | none (if to use center sampling)
@@ -158,6 +178,9 @@ def _update_config(config):
     config["model"]["input_dim"] = config["dataset"]["input_dim"]
     config["model"]["num_classes"] = config["dataset"]["num_classes"]
     config["model"]["max_seq_len"] = config["dataset"]["max_seq_len"]
+    config["model"]["label_filepaths"] = config["dataset"]["label_filepaths"]
+    config["model"]["dataset_name"] = config["dataset_name"]
+    config["model"]["split_name"] = config["split_name"]
     config["model"]["train_cfg"] = config["train_cfg"]
     config["model"]["test_cfg"] = config["test_cfg"]
     return config

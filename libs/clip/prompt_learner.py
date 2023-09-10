@@ -2,15 +2,19 @@
 Code from https://github.com/KaiyangZhou/CoOp/blob/main/trainers/coop.py
 '''
 
+import os
 import torch
 import torch.nn as nn
 
-from clip import clip
-from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
+from . import clip
+from .simple_tokenizer import SimpleTokenizer as _Tokenizer
+
+# from clip import clip
+# from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 
 _tokenizer = _Tokenizer()
 
-def load_clip_to_cpu(backbone_name):
+def load_clip_to_cpu(backbone_name, CLIP_weight):
     # backbone_name = cfg.MODEL.BACKBONE.NAME
     url = clip._MODELS[backbone_name]
     model_path = clip._download(url)
@@ -29,6 +33,28 @@ def load_clip_to_cpu(backbone_name):
                       "vision_ctx": 0,
                       "language_ctx": 0}
     model = clip.build_model(state_dict or model.state_dict(), design_details)
+
+    if os.path.isfile(CLIP_weight):
+        checkpoint = torch.load(CLIP_weight, map_location='cpu')
+        load_state_dict = checkpoint['model']
+        _load_state_dict = {}
+        for k in load_state_dict.keys():
+            new_k = k.replace('module.', '')
+            if 'image_encoder' in new_k:
+                new_k = new_k.replace('image_encoder.', 'visual.')
+            if 'text_encoder' in new_k:
+                new_k = new_k.replace('text_encoder.', '')
+            if 'prompt_learner.token_prefix' in new_k:
+                continue
+            if 'prompt_learner.token_suffix' in new_k:
+                continue
+            if 'prompt_learner.complete_text_embeddings' in new_k:
+                continue
+            _load_state_dict[new_k] = load_state_dict[k]
+        load_state_dict = _load_state_dict
+        msg = model.load_state_dict(load_state_dict, strict=False)
+        print("Loading ViFiCLIP weight........")
+        print(msg)
 
     return model
 
@@ -111,8 +137,8 @@ class PromptLearner(nn.Module):
         # These token vectors will be saved when in save_model(),
         # but they should be ignored in load_model() as we want to use
         # those computed using the current class names
-        self.register_buffer("token_prefix", embedding[:, :1, :])  # SOS
-        self.register_buffer("token_suffix", embedding[:, (1+n_ctx):, :])  # CLS, EOS
+        self.register_buffer("token_prefix", embedding[:, :1, :], persistent=False)  # SOS
+        self.register_buffer("token_suffix", embedding[:, (1+n_ctx):, :], persistent=False)  # CLS, EOS
 
         self.n_cls = n_cls
         self.n_ctx = n_ctx
@@ -121,12 +147,15 @@ class PromptLearner(nn.Module):
         self.class_token_position = cls_token_position
 
     def forward(self):
+        prefix = self.token_prefix
+        suffix = self.token_suffix
+        if self.n_ctx == 0:
+            prompts = torch.cat([prefix, suffix], dim=1)
+            return prompts
+
         ctx = self.ctx
         if ctx.dim() == 2:
             ctx = ctx.unsqueeze(0).expand(self.n_cls, -1, -1)
-
-        prefix = self.token_prefix
-        suffix = self.token_suffix
 
         if self.class_token_position == "end":
             prompts = torch.cat(

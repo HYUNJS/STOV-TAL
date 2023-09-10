@@ -58,7 +58,7 @@ def print_model_params(model):
     return
 
 
-def make_optimizer(model, optimizer_config):
+def make_optimizer(model, optimizer_config, freeze_CLIP=True):
     """create optimizer
     return a supported optimizer
     """
@@ -68,11 +68,20 @@ def make_optimizer(model, optimizer_config):
     no_decay = set()
     whitelist_weight_modules = (torch.nn.Linear, torch.nn.Conv1d, MaskedConv1D)
     blacklist_weight_modules = (LayerNorm, torch.nn.GroupNorm)
-
+    CLIP_Frz_weights = ['logit_scale', 'text_encoder']
+    CLIP_noFrz_weights = ['prompt_learner']
+    freezed_weight_names = set()
     # loop over all modules / params
     for mn, m in model.named_modules():
         for pn, p in m.named_parameters():
             fpn = '%s.%s' % (mn, pn) if mn else pn # full param name
+            if any([t in fpn for t in CLIP_Frz_weights]):
+                freezed_weight_names.add(fpn)
+                continue
+
+            if any([t in fpn for t in CLIP_noFrz_weights]):
+                decay.add(fpn)
+
             if pn.endswith('bias'):
                 # all biases will not be decayed
                 no_decay.add(fpn)
@@ -92,13 +101,15 @@ def make_optimizer(model, optimizer_config):
     # validate that we considered every parameter
     param_dict = {pn: p for pn, p in model.named_parameters()}
     inter_params = decay & no_decay
-    union_params = decay | no_decay
+    # union_params = decay | no_decay
+    union_params = decay | no_decay | freezed_weight_names
     assert len(inter_params) == 0, "parameters %s made it into both decay/no_decay sets!" % (str(inter_params), )
     assert len(param_dict.keys() - union_params) == 0, \
         "parameters %s were not separated into either decay/no_decay set!" \
         % (str(param_dict.keys() - union_params), )
 
     # create the pytorch optimizer object
+    print(freezed_weight_names)
     optim_groups = [
         {"params": [param_dict[pn] for pn in sorted(list(decay))], "weight_decay": optimizer_config['weight_decay']},
         {"params": [param_dict[pn] for pn in sorted(list(no_decay))], "weight_decay": 0.0},

@@ -1,13 +1,14 @@
-dataset_name: thumos14
+dataset_name: fineaction
 train_split: ['training']
 val_split: ['validation']
+split_name: 'all'
 dataset: {
-  train_json_file: ./data/thumos14/annotations/training_tal.json,
-  val_json_file: ./data/thumos14/annotations/validation_tal.json,
-  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
+  train_json_file: ./data/fineaction/annotations/training_tal.json,
+  val_json_file: ./data/fineaction/annotations/validation_tal.json,
+  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   file_prefix: ~,
   file_ext: .npy,
-  num_classes: 20,
+  num_classes: 106,
   input_dim: 512,
   feat_stride: 4,
   num_frames: 16,
@@ -19,16 +20,25 @@ dataset: {
 }
 model: {
   fpn_type: identity,
-  max_buffer_len_factor: 6.0,
+  max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
   n_mha_win_size: 19,
+  CLIP_cls: True,
+  CLIP_dim: 512,
+  CLIP_backbone_name: ViT-B/16,
+  prompt_n_ctx: 0,
+  CLIP_weight: ./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth,
+  CLIP_softmax: True,
 }
 opt: {
   learning_rate: 0.0001,
-  epochs: 30,
+  epochs: 3,
   weight_decay: 0.05,
+  warmup_epochs: 5,
+  eta_min: 0.0001 # 1e-8
 }
 loader: {
   batch_size: 2,
+  num_workers: 8,
 }
 train_cfg: {
   init_loss_norm: 100,
@@ -36,6 +46,7 @@ train_cfg: {
   cls_prior_prob: 0.01,
   center_sample: radius,
   center_sample_radius: 1.5,
+  run_val: True
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -48,5 +59,4 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: True,
 }
-output_folder: ./ckpt/cls_agnostic_T-FA_E-TH
-ckpt_folder: ./ckpt/cls_agnostic_T-FA_E-TH/ViFiCLIP_prop_all/
+output_folder: ./ckpt/FA_prompt

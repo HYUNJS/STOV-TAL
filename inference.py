@@ -78,7 +78,15 @@ def main(args):
     )
     # load ema model instead
     print("Loading from EMA model ...")
-    model.load_state_dict(checkpoint['state_dict_ema'])
+    _load_state_dict = checkpoint['state_dict_ema']
+    load_state_dict = {}
+    for k in _load_state_dict.keys():
+        if 'prompt_learner.token' in k:
+            continue
+        load_state_dict[k] = _load_state_dict[k]
+
+    msg = model.load_state_dict(load_state_dict, strict=False)
+    print(msg)
     del checkpoint
 
     """5. Test the model"""

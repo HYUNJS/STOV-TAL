@@ -2,6 +2,7 @@ data/
 ckpt/
 ckpt_old/
 pretrained/
+checkpoints/
 exp/
 libs/utils/dist
 libs/utils/nms_1d_cpu.egg-info

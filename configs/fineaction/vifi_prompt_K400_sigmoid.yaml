@@ -1,9 +1,14 @@
 dataset_name: fineaction
 train_split: ['training']
 val_split: ['validation']
+split_name: 'all'
+#split_name: 'K400'
+#split_name: 'nonK400'
 dataset: {
-  train_json_file: ./data/fineaction/annotations/training_tal.json,
+  train_json_file: ./data/fineaction/annotations/training_K400_tal.json,
   val_json_file: ./data/fineaction/annotations/validation_tal.json,
+#  val_json_file: ./data/fineaction/annotations/validation_K400_tal.json,
+#  val_json_file: ./data/fineaction/annotations/validation_nonK400_tal.json,
   feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   file_prefix: ~,
   file_ext: .npy,
@@ -21,6 +26,12 @@ model: {
   fpn_type: identity,
   max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
   n_mha_win_size: 19,
+  CLIP_cls: True,
+  CLIP_dim: 512,
+  CLIP_backbone_name: ViT-B/16,
+  prompt_n_ctx: 0,
+  CLIP_weight: ./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth,
+  CLIP_softmax: False,
 }
 opt: {
   learning_rate: 0.0001,
@@ -52,5 +63,5 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: True,
 }
-output_folder: ./ckpt/cls_aware
-ckpt_folder: ./ckpt/cls_aware/fineaction_ViFiCLIP_all_B2_ep3_WUep5_min1e-4
+output_folder: ./ckpt/FA_prompt
+ckpt_folder: ./ckpt/FA_prompt/vifi_prompt_K400_sigmoid_1/

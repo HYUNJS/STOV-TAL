@@ -1,4 +1,5 @@
 import math
+import pandas as pd
 
 import torch
 from torch import nn
@@ -9,6 +10,7 @@ from .blocks import MaskedConv1D, Scale, LayerNorm
 from .losses import ctr_diou_loss_1d, sigmoid_focal_loss
 
 from ..utils import batched_nms
+from ..clip import load_clip_to_cpu, PromptLearner, TextEncoder
 
 class PtTransformerClsHead(nn.Module):
     """
@@ -24,7 +26,9 @@ class PtTransformerClsHead(nn.Module):
         kernel_size=3,
         act_layer=nn.ReLU,
         with_ln=False,
-        empty_cls = []
+        empty_cls=[],
+        CLIP_cls=False,
+        CLIP_dim=512,
     ):
         super().__init__()
         self.act = act_layer()
@@ -53,10 +57,16 @@ class PtTransformerClsHead(nn.Module):
                 self.norm.append(nn.Identity())
 
         # classifier
-        self.cls_head = MaskedConv1D(
-                feat_dim, num_classes, kernel_size,
-                stride=1, padding=kernel_size//2
+        if CLIP_cls:
+            self.cls_head = MaskedConv1D(
+                feat_dim, CLIP_dim, kernel_size,
+                stride=1, padding=kernel_size // 2
             )
+        else:
+            self.cls_head = MaskedConv1D(
+                    feat_dim, num_classes, kernel_size,
+                    stride=1, padding=kernel_size//2
+                )
 
         # use prior in model initialization to improve stability
         # this will overwrite other weight init
@@ -189,6 +199,15 @@ class PtTransformer(nn.Module):
         use_abs_pe,            # if to use abs position encoding
         use_rel_pe,            # if to use rel position encoding
         num_classes,           # number of action classes
+        label_filepaths,        # label filepaths for CLIP class name
+        dataset_name,
+        split_name,
+        CLIP_cls,
+        CLIP_dim,
+        CLIP_backbone_name,
+        CLIP_weight,
+        CLIP_softmax,
+        prompt_n_ctx,
         train_cfg,             # other cfg for training
         test_cfg               # other cfg for testing
     ):
@@ -203,6 +222,7 @@ class PtTransformer(nn.Module):
         # #classes = num_classes + 1 (background) with last category as background
         # e.g., num_classes = 10 -> 0, 1, ..., 9 as actions, 10 as background
         self.num_classes = num_classes
+        self.CLIP_cls = CLIP_cls
 
         # check the feature pyramid and local attention window size
         self.max_seq_len = max_seq_len
@@ -304,13 +324,25 @@ class PtTransformer(nn.Module):
         )
 
         # classfication and regerssion heads
+        self.label_filepaths = label_filepaths
+        if CLIP_cls:
+            self.CLIP_softmax = CLIP_softmax
+            self.set_cls_names(dataset_name, split_name)
+            clip_model = load_clip_to_cpu(CLIP_backbone_name, CLIP_weight).to(torch.float)
+            self.prompt_learner = PromptLearner(None, prompt_n_ctx, self.cls_names, clip_model)
+            self.tokenized_prompts = self.prompt_learner.tokenized_prompts
+            self.text_encoder = TextEncoder(clip_model)
+            self.logit_scale = clip_model.logit_scale
+
         self.cls_head = PtTransformerClsHead(
             fpn_dim, head_dim, self.num_classes,
             kernel_size=head_kernel_size,
             prior_prob=self.train_cls_prior_prob,
             with_ln=head_with_ln,
             num_layers=head_num_layers,
-            empty_cls=train_cfg['head_empty_cls']
+            empty_cls=train_cfg['head_empty_cls'],
+            CLIP_cls=CLIP_cls,
+            CLIP_dim=CLIP_dim,
         )
         self.reg_head = PtTransformerRegHead(
             fpn_dim, head_dim, len(self.fpn_strides),
@@ -329,6 +361,13 @@ class PtTransformer(nn.Module):
         # a hacky way to get the device type
         # will throw an error if parameters are on different devices
         return list(set(p.device for p in self.parameters()))[0]
+
+    def set_cls_names(self, dataset_name, split_name):
+        label_filepath = self.label_filepaths[dataset_name][split_name]
+        cls_map_df = pd.read_csv(label_filepath)
+        self.cls_mapper = {cls_map_df.loc[i, 'name']: cls_map_df.loc[i, 'id'] for i in range(len(cls_map_df))}
+        self.cls_names = list(self.cls_mapper.keys())
+        self.num_classes = len(self.cls_mapper)
 
     def forward(self, video_list):
         # batch the video list into feats (B, C, T) and masks (B, 1, T)
@@ -351,7 +390,22 @@ class PtTransformer(nn.Module):
 
         # permute the outputs
         # out_cls: F List[B, #cls, T_i] -> F List[B, T_i, #cls]
-        out_cls_logits = [x.permute(0, 2, 1) for x in out_cls_logits]
+        if self.CLIP_cls:
+            logit_scale = self.logit_scale.exp()
+            prompts = self.prompt_learner()
+            text_feats = self.text_encoder(prompts, self.tokenized_prompts)
+            text_feats = F.normalize(text_feats, dim=-1)
+            cls_logits_list = []
+            for i in range(len(out_cls_logits)):
+                vis_feats = out_cls_logits[i].permute(0, 2, 1)
+                vis_feats = F.normalize(vis_feats, dim=-1)
+                cls_logits = torch.einsum('B T D, C D -> B T C', vis_feats, text_feats) * logit_scale
+                if self.CLIP_softmax:
+                    cls_logits = cls_logits.softmax(dim=-1)
+                cls_logits_list.append(cls_logits)
+            out_cls_logits = cls_logits_list
+        else:
+            out_cls_logits = [x.permute(0, 2, 1) for x in out_cls_logits]
         # out_offset: F List[B, 2 (xC), T_i] -> F List[B, T_i, 2 (xC)]
         out_offsets = [x.permute(0, 2, 1) for x in out_offsets]
         # fpn_masks: F list[B, 1, T_i] -> F List[B, T_i]

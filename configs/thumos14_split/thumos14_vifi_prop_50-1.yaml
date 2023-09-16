@@ -1,12 +1,16 @@
 dataset_name: thumos14
 train_split: ['training']
 val_split: ['validation']
+# val_split: ['training', 'validation']
 dataset: {
+  # json_file: ./data/thumos14/annotations/train_50_test_50/training_non50-1_tal.json,
+  # json_file: ./data/thumos14/annotations/train_50_test_50/validation_non50-1_tal.json,
   train_json_file: ./data/thumos14/annotations/train_50_test_50/training_50-1_tal.json,
-  val_json_file: ./data/thumos14/annotations/train_50_test_50/validation_50-1_tal.json,
+  # val_json_file: ./data/thumos14/annotations/train_50_test_50/validation_50-1_tal.json,
+  val_json_file: ./data/thumos14/annotations/train_50_test_50/validation_non50-1_tal.json,
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
-  val_file_dir: './data/thumos14/annotations/train_50_test_50',
-  val_file_list: ['validation_50-1_tal.json', 'validation_non50-1_tal.json'],
+  # val_file_dir: './data/thumos14/annotations/train_50_test_50',
+  # val_file_list: ['validation_50-1_tal.json', 'validation_non50-1_tal.json'],
   class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
@@ -27,10 +31,10 @@ model: {
 }
 opt: {
   learning_rate: 0.0001,
+  # eta_min: 0.0001, # 1e-8
   epochs: 30,
-  weight_decay: 0.05,
   warmup_epochs: 5,
-  eta_min: 0.0001 # 1e-8
+  weight_decay: 0.05,
 }
 loader: {
   batch_size: 2,
@@ -56,3 +60,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/cls_agnostic_50
+ckpt_folder: ./ckpt/cls_agnostic_50/thumos14_vifi_prop_50-1_0

@@ -1,9 +1,14 @@
 dataset_name: thumos14
 train_split: ['training']
-val_split: ['validation']
+# val_split: ['validation']
+val_split: ['training', 'validation']
 dataset: {
+  # json_file: ./data/thumos14/annotations/train_75_test_25/training_non75-7_tal.json,
+  # json_file: ./data/thumos14/annotations/train_75_test_25/validation_non75-7_tal.json,
   train_json_file: ./data/thumos14/annotations/train_75_test_25/training_75-7_tal.json,
-  val_json_file: ./data/thumos14/annotations/train_75_test_25/validation_75-7_tal.json,
+  # val_json_file: ./data/thumos14/annotations/train_75_test_25/validation_75-7_tal.json,
+  # val_json_file: ./data/thumos14/annotations/train_75_test_25/validation_non75-7_tal.json,
+  val_json_file: ./data/thumos14/annotations/train_75_test_25/training_non75-7_tal.json,
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   val_file_dir: './data/thumos14/annotations/train_75_test_25',
   val_file_list: ['validation_75-7_tal.json', 'validation_non75-7_tal.json'],
@@ -27,10 +32,10 @@ model: {
 }
 opt: {
   learning_rate: 0.0001,
-  epochs: 30,
-  weight_decay: 0.05,
+  # eta_min: 0.0001, # 1e-8
+  epochs: 5,
   warmup_epochs: 5,
-  eta_min: 0.0001 # 1e-8
+  weight_decay: 0.05,
 }
 loader: {
   batch_size: 2,
@@ -56,3 +61,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/cls_agnostic_75
+ckpt_folder: ./ckpt/cls_agnostic_75/thumos14_vifi_prop_75-7_3

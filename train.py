@@ -14,7 +14,7 @@ import torch.utils.data
 from torch.utils.tensorboard import SummaryWriter
 
 # our code
-from libs.core import load_config
+from libs.core import load_config, merge_args
 from libs.datasets import make_dataset, make_data_loader
 from libs.modeling import make_meta_arch
 from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection, valid_one_epoch, valid_proposal_all_splits,
@@ -22,6 +22,25 @@ from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection, valid_o
                         fix_random_seed, ModelEma, ANETdetectionProp)
 from tqdm import tqdm
 
+def parse_split_name(val_filename):
+    if val_filename == 'validation_tal.json':
+        split_name = 'val_all'
+    elif val_filename == 'validation_K400_tal.json':
+        split_name = 'val_K400'
+    elif val_filename == 'validation_nonK400_tal.json':
+        split_name = 'val_nonK400'
+    elif '50-' in val_filename:
+        split_cfg = val_filename.split('_')[1]
+        split_name = f'val_{split_cfg}'
+    elif '75-' in val_filename:
+        split_cfg = val_filename.split('_')[1]
+        split_name = f'val_{split_cfg}'
+    else:
+        raise NotImplementedError(f"{val_filename} is not the case")
+    print("split", split_name)
+    
+    return split_name
+    
 ################################################################################
 def main(args):
     """main function that handles training / inference"""
@@ -33,6 +52,8 @@ def main(args):
         cfg = load_config(args.config)
     else:
         raise ValueError("Config file does not exist.")
+    if args.opts is not None:
+        merge_args(cfg, args.opts)
     # pprint(cfg)
 
     # prep for output folder (based on time stamp)
@@ -76,21 +97,7 @@ def main(args):
         if len(val_file_list) != 0:
             val_loader_list, det_eval_list, split_name_list = [], [], []
             for val_filename in val_file_list:
-                if val_filename == 'validation_tal.json':
-                    split_name = 'val_all'
-                elif val_filename == 'validation_K400_tal.json':
-                    split_name = 'val_K400'
-                elif val_filename == 'validation_nonK400_tal.json':
-                    split_name = 'val_nonK400'
-                elif '50-' in val_filename:
-                    split_cfg = val_filename.split('_')[1]
-                    split_name = f'val_{split_cfg}'
-                elif '75-' in val_filename:
-                    split_cfg = val_filename.split('_')[1]
-                    split_name = f'val_{split_cfg}'
-                else:
-                    raise NotImplementedError(f"{val_filename} is not the case")
-                    
+                split_name = parse_split_name(val_filename)
                 split_name_list.append(split_name)
                 cfg['dataset']['val_json_file'] = osp.join(cfg['dataset']['val_file_dir'], val_filename)
                 val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
@@ -106,6 +113,7 @@ def main(args):
                 det_eval_list.append(det_eval)
         else:
             val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
+            split_name = parse_split_name(val_dataset.json_file)
             val_loader = make_data_loader(val_dataset, False, None, val_bs, cfg['loader']['num_workers'])
             det_eval = ANETdetectionProp(
                 val_dataset.json_file,
@@ -202,6 +210,7 @@ def main(args):
                     print_freq=args.print_freq,
                     verbose=False,
                     cls_agnostic=cfg['dataset']['class_agnostic'],
+                    split_name=split_name
                 )
         
         # save ckpt once in a while
@@ -239,13 +248,20 @@ if __name__ == '__main__':
                         help='path to a config file')
     parser.add_argument('-p', '--print-freq', default=100, type=int,
                         help='print frequency (default: 10 iterations)')
-    # parser.add_argument('-c', '--ckpt-freq', default=5, type=int,
-    #                     help='checkpoint frequency (default: every 5 epochs)')
-    parser.add_argument('-c', '--ckpt-freq', default=1, type=int,
+    parser.add_argument('-c', '--ckpt-freq', default=5, type=int,
                         help='checkpoint frequency (default: every 5 epochs)')
+    # parser.add_argument('-c', '--ckpt-freq', default=1, type=int,
+    #                     help='checkpoint frequency (default: every 5 epochs)')
     parser.add_argument('--output', default='', type=str,
                         help='name of exp folder (default: none)')
     parser.add_argument('--resume', default='', type=str, metavar='PATH',
                         help='path to a checkpoint (default: none)')
+    parser.add_argument(
+        "--opts",
+        help="Modify config options by adding 'KEY VALUE' pairs. ",
+        default=None,
+        nargs=argparse.REMAINDER,
+    )
     args = parser.parse_args()
+    print(args)
     main(args)

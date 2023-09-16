@@ -39,7 +39,7 @@ class THUMOS14Dataset(Dataset):
         **kwargs,
     ):
         if json_file == '':
-            json_file = train_json_file if 'training' in split else val_json_file
+            json_file = val_json_file if 'validation' in split else train_json_file
         print(f'split: {split} | filepath: {json_file}')
         # file path
         assert os.path.exists(feat_folder) and os.path.exists(json_file)

@@ -14,7 +14,7 @@ import torch.backends.cudnn as cudnn
 import torch.utils.data
 
 # our code
-from libs.core import load_config
+from libs.core import load_config, merge_args
 from libs.datasets import make_dataset, make_data_loader
 from libs.modeling import make_meta_arch
 from libs.utils import valid_one_epoch, ANETdetection, fix_random_seed, run_mRec_eval
@@ -29,6 +29,9 @@ def main(args):
         cfg = load_config(args.config)
     else:
         raise ValueError("Config file does not exist.")
+    if args.opts is not None:
+        merge_args(cfg, args.opts)
+        
     assert len(cfg['val_split']) > 0, "Test set must be specified!"
     if ".pth.tar" in args.ckpt:
         assert os.path.isfile(args.ckpt), "CKPT file does not exist!"
@@ -162,5 +165,11 @@ if __name__ == '__main__':
                         help='Only save the ouputs without evaluation (e.g., for test set)')
     parser.add_argument('-p', '--print-freq', default=10, type=int,
                         help='print frequency (default: 10 iterations)')
+    parser.add_argument(
+        "--opts",
+        help="Modify config options by adding 'KEY VALUE' pairs. ",
+        default=None,
+        nargs=argparse.REMAINDER,
+    )
     args = parser.parse_args()
     main(args)

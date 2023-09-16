@@ -197,3 +197,19 @@ def load_config(config_file, defaults=DEFAULTS):
     _merge(defaults, config)
     config = _update_config(config)
     return config
+
+def merge_args(config, cfg_list):
+    assert len(cfg_list) % 2 == 0, "Override list has odd length: {}; it must be a list of pairs".format(cfg_list)
+    
+    for full_key, v in zip(cfg_list[0::2], cfg_list[1::2]):
+        key_list = full_key.split(".")
+        d = config
+        for subkey in key_list[:-1]:
+            assert subkey in d, "Non-existent key: {}".format(full_key)
+            d = d[subkey]
+        subkey = key_list[-1]
+        assert subkey in d, "Non-existent key: {}".format(full_key)
+        assert isinstance(v , str), "currently only support string input"
+    
+        d[subkey] = v
+        

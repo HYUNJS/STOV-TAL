@@ -8,7 +8,7 @@ VER=0
 D1=0
 D2=1
 
-dataset='thumos14'
+dataset='anet13'
 echo threshold $th $dataset
 sleep 5;
 

@@ -6,7 +6,7 @@ th=$1
 # th=0.05
 VER=0
 
-dataset='thumos14'
+dataset='anet13'
 echo threshold $th $dataset
 sleep 5
 

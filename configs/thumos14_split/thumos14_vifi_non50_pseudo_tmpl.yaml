@@ -4,7 +4,7 @@ val_split: ['validation']
 # val_split: ['training', 'validation']
 dataset: {
   train_json_file: ./data/thumos14/pseudo_annos_nonsplit/T-50-0_E-non50-0_th-0.00_CLS-ep10.json, # variable
-  val_json_file: ./data/thumos14/annotations/train_50_test_50/validation_50-0_tal.json, # variable
+  val_json_file: ./data/thumos14/annotations/train_50_test_50/validation_non50-0_tal.json, # variable
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   class_agnostic: False,
   file_prefix: ~,

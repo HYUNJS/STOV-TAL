@@ -12,10 +12,12 @@ import torch.backends.cudnn as cudnn
 import torch.utils.data
 
 # our code
-from libs.core import load_config
+from libs.core import load_config, merge_args
 from libs.datasets import make_dataset, make_data_loader
 from libs.modeling import make_meta_arch
-from libs.utils import valid_one_epoch, ANETdetection, fix_random_seed
+# from libs.utils import valid_one_epoch, ANETdetection, fix_random_seed
+from libs.utils import valid_one_epoch, fix_random_seed
+from libs.utils import ANETdetectionProp as ANETdetection
 
 
 ################################################################################
@@ -26,18 +28,22 @@ def main(args):
         cfg = load_config(args.config)
     else:
         raise ValueError("Config file does not exist.")
+    if args.opts is not None:
+        merge_args(cfg, args.opts)
+    
     assert len(cfg['val_split']) > 0, "Test set must be specified!"
     if ".pth.tar" in args.ckpt:
         assert os.path.isfile(args.ckpt), "CKPT file does not exist!"
         ckpt_file = args.ckpt
     else:
-        assert os.path.isdir(args.ckpt), "CKPT file folder does not exist!"
+        ckpt_folder = cfg['ckpt_folder'] if args.ckpt == '' else args.ckpt
+        assert os.path.isdir(ckpt_folder), "CKPT file folder does not exist!"
         if args.epoch > 0:
             ckpt_file = os.path.join(
-                args.ckpt, 'epoch_{:03d}.pth.tar'.format(args.epoch)
+                ckpt_folder, 'epoch_{:03d}.pth.tar'.format(args.epoch)
             )
         else:
-            ckpt_file_list = sorted(glob.glob(os.path.join(args.ckpt, '*.pth.tar')))
+            ckpt_file_list = sorted(glob.glob(os.path.join(ckpt_folder, '*.pth.tar')))
             ckpt_file = ckpt_file_list[-1]
         assert os.path.exists(ckpt_file)
     ckpt_ep_info = ckpt_file.split('/')[-1].replace('.pth.tar', '')
@@ -117,7 +123,9 @@ if __name__ == '__main__':
       description='Train a point-based transformer for action localization')
     parser.add_argument('config', type=str, metavar='DIR',
                         help='path to a config file')
-    parser.add_argument('ckpt', type=str, metavar='DIR',
+    # parser.add_argument('ckpt', type=str, metavar='DIR',
+    #                     help='path to a checkpoint')
+    parser.add_argument('--ckpt', type=str, default='',
                         help='path to a checkpoint')
     parser.add_argument('-e', '--epoch', type=int, default=-1,
                         help='checkpoint epoch')
@@ -127,5 +135,11 @@ if __name__ == '__main__':
                         help='Only save the ouputs without evaluation (e.g., for test set)')
     parser.add_argument('-p', '--print-freq', default=10, type=int,
                         help='print frequency (default: 10 iterations)')
+    parser.add_argument(
+        "--opts",
+        help="Modify config options by adding 'KEY VALUE' pairs. ",
+        default=None,
+        nargs=argparse.REMAINDER,
+    )
     args = parser.parse_args()
     main(args)

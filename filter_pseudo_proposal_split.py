@@ -7,30 +7,36 @@ split_50_list = [f'50-{i}' for i in range(10)]
 split_non50_list = [f'non50-{i}' for i in range(10)]
 split_75_list = [f'75-{i}' for i in range(10)]
 split_non75_list = [f'non75-{i}' for i in range(10)]
+
+def get_gt_splits_filepath_dict(dataset_name):
+    gt_filepath_dict = {
+        'training': {
+            'all': f'./data/{dataset_name}/annotations/training_tal.json',
+            ## 50 split
+            **{s: f'./data/{dataset_name}/annotations/train_50_test_50/training_{s}_tal.json' for s in split_50_list},
+            **{s: f'./data/{dataset_name}/annotations/train_50_test_50/training_{s}_tal.json' for s in split_non50_list},
+            ## 75 split
+            **{s: f'./data/{dataset_name}/annotations/train_75_test_25/training_{s}_tal.json' for s in split_75_list},
+            **{s: f'./data/{dataset_name}/annotations/train_75_test_25/training_{s}_tal.json' for s in split_non75_list},
+        },
+        'validation': {
+            'all': './data/{dataset_name}/annotations/validation_tal.json',
+            ## 50 split
+            **{f'50-{i}': f'./data/{dataset_name}/annotations/train_50_test_50/validation_50-{i}_tal.json' for i in range(10)},
+            **{f'non50-{i}': f'./data/{dataset_name}/annotations/train_50_test_50/validation_non50-{i}_tal.json' for i in range(10)},
+            ## 75 split
+            **{f'75-{i}': f'./data/{dataset_name}/annotations/train_75_test_25/validation_75-{i}_tal.json' for i in range(10)},
+            **{f'non75-{i}': f'./data/{dataset_name}/annotations/train_75_test_25/validation_non75-{i}_tal.json' for i in range(10)},
+        },
+    }
     
-gt_thumos14_filepath_dict = {
-    'training': {
-        'all': './data/thumos14/annotations/training_tal.json',
-        ## 50 split
-        **{s: f'./data/thumos14/annotations/train_50_test_50/training_{s}_tal.json' for s in split_50_list},
-        **{s: f'./data/thumos14/annotations/train_50_test_50/training_{s}_tal.json' for s in split_non50_list},
-        ## 75 split
-        **{s: f'./data/thumos14/annotations/train_75_test_25/training_{s}_tal.json' for s in split_75_list},
-        **{s: f'./data/thumos14/annotations/train_75_test_25/training_{s}_tal.json' for s in split_non75_list},
-    },
-    'validation': {
-        'all': './data/thumos14/annotations/validation_tal.json',
-        ## 50 split
-        **{f'50-{i}': f'./data/thumos14/annotations/train_50_test_50/validation_50-{i}_tal.json' for i in range(10)},
-        **{f'non50-{i}': f'./data/thumos14/annotations/train_50_test_50/validation_non50-{i}_tal.json' for i in range(10)},
-        ## 75 split
-        **{f'75-{i}': f'./data/thumos14/annotations/train_75_test_25/validation_75-{i}_tal.json' for i in range(10)},
-        **{f'non75-{i}': f'./data/thumos14/annotations/train_75_test_25/validation_non75-{i}_tal.json' for i in range(10)},
-    },
-}
+    return gt_filepath_dict
+
+
 
 gt_filepath_dict_all = {
-    'thumos14': gt_thumos14_filepath_dict,
+    'thumos14': get_gt_splits_filepath_dict('thumos14'),
+    'anet13': get_gt_splits_filepath_dict('anet13'),
 }
 
 def filter_props(tgt_prop_fliepath, save_path, model_cfg_name, score_thresh, topx, thresh_flag, topx_flag):
@@ -126,8 +132,8 @@ if __name__ == '__main__':
     thumos14_save_path = f'./ckpt/cls_agnostic_{split_type}/{th14_ckpt_cfg}/pseudo_labels'
     
     ## anet13 path
-    anet_ver='3'
-    anet_ep='010'
+    anet_ver='1'
+    anet_ep='008'
     anet13_ckpt_cfg = f'anet13_{model}_prop_{Tsplit}_{anet_ver}'
     anet13_train_prop = f'./ckpt/cls_agnostic_{split_type}/{anet13_ckpt_cfg}/proposal_{subset}_{Esplit}_tal/{anet13_ckpt_cfg}_epoch_{anet_ep}.json'
     anet13_save_path = f'./ckpt/cls_agnostic_{split_type}/{anet13_ckpt_cfg}/pseudo_labels'

@@ -27,8 +27,8 @@ model: {
 opt: {
   learning_rate: 0.0001,
   # eta_min: 0.0001, # 1e-8
-  # epochs: 30,
-  epochs: 10,
+  epochs: 30,
+  # epochs: 10,
   warmup_epochs: 5,
   weight_decay: 0.05,
 }

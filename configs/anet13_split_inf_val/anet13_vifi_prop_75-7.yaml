@@ -8,7 +8,8 @@ train_split: ['training']
 # val_split: ['training']
 val_split: ['validation']
 dataset: {
-  json_file: ./data/anet13/annotations/train_75_test_25/validation_75-7_tal.json,
+  # json_file: ./data/anet13/annotations/train_75_test_25/validation_75-7_tal.json,
+  json_file: ./data/anet13/annotations/train_75_test_25/validation_non75-7_tal.json,
   feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s16F_ep10_trainval,
   class_agnostic: True,
   file_prefix: ~,

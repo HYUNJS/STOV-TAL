@@ -5,12 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "anet13 train",
+            "name": "anet13 train PL",
             "type": "python",
             "request": "launch",
             "program": "/root/code/actionformer-prop/train.py",
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "args": "configs/anet13/anet_vifi_all.yaml -c 5 --output 1",
+            // "args": "configs/anet13/anet_vifi_all.yaml -c 5 --output 1",
+            // "args": [" configs/anet13_split/anet13_vifi_non50_pseudo_tmpl.yaml --output split0_th0.05_0 ",
+            //         "--opts dataset.train_json_file ./data/anet13/pseudo_annos_non50/T-50-0_E-non50-0_th-0.05_CLS-ep10.json ",
+            //                "dataset.val_json_file ./data/anet13/annotations/train_50_test_50/validation_non50-0_tal.json"],
+            "args": ["configs/anet13_split/anet13_vifi_non50_pseudo_tmpl.yaml", "--output", "split0_th0.05_0",
+                    "--opts", "dataset.train_json_file", "./data/anet13/pseudo_annos_non50/T-50-0_E-non50-0_th-0.05_CLS-ep10.json",
+                    "dataset.val_json_file", "./data/anet13/annotations/train_50_test_50/validation_non50-0_tal.json"],
+            "justMyCode": true
+        },
+        {
+            "name": "anet13 train prop",
+            "type": "python",
+            "request": "launch",
+            "program": "/root/code/actionformer-prop/train.py",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "args": ["configs/anet13_split/anet13_vifi_prop_50-0.yaml", "--output", "tmp"],
             "justMyCode": true
         }
     ]

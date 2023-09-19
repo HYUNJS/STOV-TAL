@@ -230,7 +230,7 @@ class ActivityNetDataset(Dataset):
                     # skip an action that is mostly outside of the feature map
                     segm_duration = seg[1].item() - seg[0].item()
                     if segm_duration <= 0:
-                        segm_duration
+                        continue
                     ratio = (
                         (min(seg[1].item(), vid_len) - seg[0].item()) / segm_duration
                     )

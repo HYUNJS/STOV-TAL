@@ -12,6 +12,7 @@ DEFAULTS = {
     'split_name': 'all',
     "model_name": "LocPointTransformer",
     "dataset": {
+        'split_id': -1,
         'root_dir': './data',
         'json_file': '',
         'train_json_file': '',
@@ -191,11 +192,21 @@ def _update_config(config):
     config["model"]["test_cfg"] = config["test_cfg"]
     return config
 
+def _update_split_id(config):
+    split_id = config['dataset']['split_id']
+    if split_id != -1:
+        config['dataset']['train_json_file'] = config['dataset']['train_json_file'].format(split_id=split_id)
+        config['dataset']['val_json_file'] = config['dataset']['val_json_file'].format(split_id=split_id)
+        config['dataset']['val_file_list'] = [s.format(split_id=0) for s in config['dataset']['val_file_list']]
+    return config
+
 def load_config(config_file, defaults=DEFAULTS):
     with open(config_file, "r") as fd:
         config = yaml.load(fd, Loader=yaml.FullLoader)
     _merge(defaults, config)
     config = _update_config(config)
+    config = _update_split_id(config)
+    
     return config
 
 def merge_args(config, cfg_list):
@@ -213,3 +224,5 @@ def merge_args(config, cfg_list):
     
         d[subkey] = v
         
+        if subkey == 'split_id':
+            config = _update_split_id(config)

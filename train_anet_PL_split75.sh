@@ -4,7 +4,9 @@ th=$1
 # th=0.00
 # th=0.01
 # th=0.05
-VER=0
+# VER=0 # ep3 | dim=256
+# VER=1 # ep3 | dim=512 | no_pos
+VER=2 # ep10 | dim=512 | no_pos
 
 dataset='anet13'
 echo threshold $th $dataset

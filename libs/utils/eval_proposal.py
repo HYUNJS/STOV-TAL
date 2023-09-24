@@ -744,7 +744,7 @@ def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, n
         split,
         tiou_thresholds=tiou_thresholds,
         dataset_name=dataset, num_workers=num_workers,
-        top_k=[50, 100, 300, 1000],
+        top_k=[100, 300],
         top_kx=[1, 5],
     )
 
@@ -760,19 +760,6 @@ def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, n
 
     mAPs, mRxs, mRs = evaluator.evaluate_mAP(pred_tgt)
     mAP = mAPs[0]
-    mRxs[0,]
-    prop_rec5x = prop_Rxs[0, 1]
-    prop_rec100 = prop_Rs[0, 1]
-    prop_rec300 = prop_Rs[0, 2]
-    prop_rec1000 = prop_Rs[0, 3]
-    results_dict = {'R@1x': prop_rec1x, 'R@5x': prop_rec5x, 'R@100': prop_rec100, 'R@300':prop_rec300, 'R@1000': prop_rec1000}
-    result_in_csv = ','.join([f'{f:.5f}' for f in list(results_dict.values())] + [str(len(pred_tgt))])
-    if verbose:
-        print(f'    pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
-              f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f} | #preds: {len(pred_tgt)}')
-        print()
+    print(mAP)
 
-    if get_csv:
-        return prop_Rxs, prop_Rs, results_dict, result_in_csv
-    else:
-        return prop_Rxs, prop_Rs, results_dict
+    return mAPs

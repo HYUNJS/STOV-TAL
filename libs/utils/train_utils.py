@@ -76,6 +76,7 @@ def make_optimizer(model, optimizer_config, freeze_CLIP=True):
         for pn, p in m.named_parameters():
             fpn = '%s.%s' % (mn, pn) if mn else pn # full param name
             if any([t in fpn for t in CLIP_Frz_weights]):
+                p.requires_grad_(False)
                 freezed_weight_names.add(fpn)
                 continue
 

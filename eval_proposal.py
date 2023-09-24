@@ -1,6 +1,6 @@
 import os
 import os.path
-from libs.utils import run_mRec_eval
+from libs.utils import run_mRec_eval, run_mAP_eval
 
 
 def eval(gt_filepath, proposal_filepath, score_thresh=0.0, split='validation'):
@@ -21,6 +21,13 @@ def eval(gt_filepath, proposal_filepath, score_thresh=0.0, split='validation'):
     # print(f"R@100: {R100:.3f}")
     # print(f"R@300: {R300:.3f}")
     # print(f"R@1000: {R1000:.3f}")
+    
+def eval_mAP(gt_filepath, proposal_filepath, score_thresh=0.0, split='validation'):
+    print(f'{proposal_filepath} - {score_thresh}')
+
+    tiou_thresholds = [0.5]
+    dataset_name = 'thumos14'
+    _ = run_mAP_eval(gt_filepath, proposal_filepath, tiou_thresholds, score_thresh, dataset_name, num_workers=8, split=split)
 
 if __name__ == '__main__':
     gt_train_filepath = './data/thumos14/annotations/training_tal.json'
@@ -70,13 +77,33 @@ if __name__ == '__main__':
     # eval(gt_nonK400_train_filepath, tgt_filepath4, split=split)
     # eval(gt_nonK400_train_filepath, tgt_filepath5, split=split)
     
-    tgt_filepath1 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-1.json'
-    tgt_filepath2 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-5.json'
-    tgt_filepath3 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-10.json'
-    tgt_filepath4 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-50.json'
-    tgt_filepath5 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-100.json'
-    eval(gt_nonK400_train_filepath, tgt_filepath1, split=split)
-    eval(gt_nonK400_train_filepath, tgt_filepath2, split=split)
-    eval(gt_nonK400_train_filepath, tgt_filepath3, split=split)
-    eval(gt_nonK400_train_filepath, tgt_filepath4, split=split)
-    eval(gt_nonK400_train_filepath, tgt_filepath5, split=split)
+    # tgt_filepath1 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-1.json'
+    # tgt_filepath2 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-5.json'
+    # tgt_filepath3 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-10.json'
+    # tgt_filepath4 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-50.json'
+    # tgt_filepath5 = './ckpt/cls_agnostic/thumos_ViFiCLIP_prop_K400_1/pseudo_labels/training_T-K400_E-nonK400_top-100.json'
+    # eval(gt_nonK400_train_filepath, tgt_filepath1, split=split)
+    # eval(gt_nonK400_train_filepath, tgt_filepath2, split=split)
+    # eval(gt_nonK400_train_filepath, tgt_filepath3, split=split)
+    # eval(gt_nonK400_train_filepath, tgt_filepath4, split=split)
+    # eval(gt_nonK400_train_filepath, tgt_filepath5, split=split)
+    
+    split='validation'
+    tgt_filepath1 = './ckpt/TH_prompt/vifi_prompt_K400_softmax_1/proposal_validation_nonK400_tal/vifi_prompt_K400_softmax_1_epoch_035.json'
+    # tgt_filepath1 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_3/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_3_epoch_005.json'
+    # tgt_filepath2 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_3/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_3_epoch_010.json'
+    # tgt_filepath3 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_2_epoch_030.json'
+    # tgt_filepath4 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_2_epoch_035.json'
+    # tgt_filepath5 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_pseudo_0-05_2_epoch_020.json'
+    # tgt_filepath6 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_pseudo_0-05_2_epoch_025.json'
+    # tgt_filepath7 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_pseudo_0-05_2_epoch_030.json'
+    # tgt_filepath8 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_pseudo_0-05_2_epoch_035.json'
+    eval_mAP(gt_nonK400_val_filepath, tgt_filepath1, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath2, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath3, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath4, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath5, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath6, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath7, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath8, split=split)
+    

@@ -1,7 +1,7 @@
 dataset_name: thumos14
 train_split: ['training']
 val_split: ['validation']
-#split_name: 'all'
+# split_name: 'all'
 #split_name: 'K400'
 split_name: 'nonK400'
 dataset: {
@@ -62,4 +62,4 @@ test_cfg: {
   multiclass_nms: True,
 }
 output_folder: ./ckpt/TH_prompt/
-ckpt_folder: ./ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_1/
+ckpt_folder: ./ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_3/

@@ -22,7 +22,7 @@ from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection, valid_o
                         fix_random_seed, ModelEma, ANETdetectionProp)
 from tqdm import tqdm
 
-def parse_split_name(val_filename):
+def parse_split_name(val_filename, cfg):
     if val_filename == 'validation_tal.json':
         split_name = 'val_all'
     elif val_filename == 'validation_K400_tal.json':
@@ -35,6 +35,8 @@ def parse_split_name(val_filename):
     elif '75-' in val_filename:
         split_cfg = val_filename.split('_')[1]
         split_name = f'val_{split_cfg}'
+    elif cfg['split_name'] != '':
+        split_name = cfg['split_name']
     else:
         raise NotImplementedError(f"{val_filename} is not the case")
     print("split", split_name)
@@ -97,7 +99,7 @@ def main(args):
         if len(val_file_list) != 0:
             val_loader_list, det_eval_list, split_name_list = [], [], []
             for val_filename in val_file_list:
-                split_name = parse_split_name(val_filename)
+                split_name = parse_split_name(val_filename, cfg)
                 split_name_list.append(split_name)
                 cfg['dataset']['val_json_file'] = osp.join(cfg['dataset']['val_file_dir'], val_filename)
                 val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
@@ -113,7 +115,7 @@ def main(args):
                 det_eval_list.append(det_eval)
         else:
             val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
-            split_name = parse_split_name(val_dataset.json_file)
+            split_name = parse_split_name(val_dataset.json_file, cfg)
             val_loader = make_data_loader(val_dataset, False, None, val_bs, cfg['loader']['num_workers'])
             det_eval = ANETdetectionProp(
                 val_dataset.json_file,

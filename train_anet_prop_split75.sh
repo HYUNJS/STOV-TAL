@@ -1,13 +1,9 @@
 #!/bin/bash
 
-th=$1
-# th=0.00
-# th=0.01
-# th=0.05
-VER=2
+VER=0
 
 dataset='anet13'
-echo threshold $th $dataset
+echo $dataset
 sleep 5;
 
 devices=(0 1 2 3 0 1 2 3 0 1)

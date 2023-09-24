@@ -45,7 +45,7 @@ opt: {
 }
 loader: {
   batch_size: 16,
-  num_workers: 2,
+  num_workers: 4,
 }
 train_cfg: {
   init_loss_norm: 200,
@@ -73,4 +73,4 @@ test_cfg: {
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-output_folder: ./ckpt/cls_agnostic_50
+output_folder: ./ckpt/AN_agn_50

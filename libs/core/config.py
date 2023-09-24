@@ -197,7 +197,7 @@ def _update_split_id(config):
     if split_id != -1:
         config['dataset']['train_json_file'] = config['dataset']['train_json_file'].format(split_id=split_id)
         config['dataset']['val_json_file'] = config['dataset']['val_json_file'].format(split_id=split_id)
-        config['dataset']['val_file_list'] = [s.format(split_id=0) for s in config['dataset']['val_file_list']]
+        config['dataset']['val_file_list'] = [s.format(split_id=split_id) for s in config['dataset']['val_file_list']]
     return config
 
 def load_config(config_file, defaults=DEFAULTS):

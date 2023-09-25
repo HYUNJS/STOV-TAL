@@ -1,9 +1,9 @@
 dataset_name: thumos14
 train_split: ['training']
-# val_split: ['training']
-val_split: ['validation']
+val_split: ['training']
 dataset: {
-  json_file: ./data/thumos14/annotations/train_75_test_25/validation_non75-8_tal.json,
+  split_id: -1, # input proper split_id
+  json_file: "./data/thumos14/annotations/train_50_test_50/training_non50-{split_id}_tal.json",
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   class_agnostic: True,
   file_prefix: ~,
@@ -53,5 +53,5 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: False,
 }
-output_folder: ./ckpt/cls_agnostic_75
-ckpt_folder: ./ckpt/cls_agnostic_75/thumos14_vifi_prop_75-8_0
+# ckpt_folder: ./ckpt/path_to_ckpt
+ckpt_folder: "./ckpt/TH_agn_50/thumos14_vifi_prop_50_tmpl_split{split_id}_1"

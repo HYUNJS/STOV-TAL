@@ -126,7 +126,7 @@ def main(args):
     score_thresh = 0.0
     dataset_name = cfg['dataset_name']
     _, _, results_dict = run_mRec_eval(val_dataset.json_file, proposal_filepath, tiou_thresholds, score_thresh,
-                                       dataset_name, num_workers=8, split=cfg['val_split'][0])
+                                       dataset_name, num_workers=cfg['loader']['num_workers'], split=cfg['val_split'][0])
     
     pd.DataFrame(results_dict, index=[0]).to_csv(metric_filepath, index=False)
     

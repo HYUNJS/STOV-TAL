@@ -5,11 +5,11 @@
 
 dataset_name: anet13
 train_split: ['training']
-# val_split: ['training']
 val_split: ['validation']
 dataset: {
-  # json_file: ./data/anet13/annotations/train_75_test_25/validation_75-5_tal.json,
-  json_file: ./data/anet13/annotations/train_75_test_25/validation_non75-5_tal.json,
+  split_id: -1, # input proper split_id
+  json_file: "./data/anet13/annotations/train_75_test_25/validation_75-{split_id}_tal.json",
+  # json_file: "./data/anet13/annotations/train_75_test_25/validation_non75-{split_id}_tal.json",
   feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s16F_ep10_trainval,
   class_agnostic: True,
   file_prefix: ~,
@@ -31,14 +31,14 @@ model: {
   # 192 - 96 - 48 - 24 - 12 - 6
   n_mha_win_size: [7, 7, 7, 7, 7, -1],
   n_head: 4,
-  embd_dim: 256,
-  fpn_dim: 256,
-  head_dim: 256,
-  use_abs_pe: True,
+  # embd_dim: 256,
+  # fpn_dim: 256,
+  # head_dim: 256,
+  # use_abs_pe: True,
 }
 opt: {
   learning_rate: 0.001,
-  epochs: 3,
+  epochs: 5,
   weight_decay: 0.05,
 }
 loader: {
@@ -71,5 +71,4 @@ test_cfg: {
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-output_folder: ./ckpt/cls_agnostic_75
-ckpt_folder: ./ckpt/cls_agnostic_75/anet13_vifi_prop_75-5_1
+ckpt_folder: "./ckpt/AN_agn_75/anet13_vifi_prop_75_tmpl_split{split_id}_0"

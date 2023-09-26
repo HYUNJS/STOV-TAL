@@ -108,6 +108,7 @@ DEFAULTS = {
         "use_rel_pe": False,
         # classifier with CLIP
         "CLIP_cls": False,
+        # "CLIP_inf_only": False,
         "CLIP_dim": 512,
         "CLIP_backbone_name": "ViT-B/16",
         "prompt_n_ctx": 0,
@@ -223,7 +224,9 @@ def merge_args(config, cfg_list):
         subkey = key_list[-1]
         assert subkey in d, "Non-existent key: {}".format(full_key)
         assert isinstance(v , str), "currently only support string input"
-    
+
+        if v.isdigit():
+            v = int(v)
         d[subkey] = v
         
         if subkey == 'split_id':

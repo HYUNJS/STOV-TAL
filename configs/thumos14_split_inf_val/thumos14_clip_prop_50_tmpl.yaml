@@ -1,13 +1,11 @@
 dataset_name: thumos14
 train_split: ['training']
 val_split: ['validation']
-# val_split: ['training', 'validation']
 dataset: {
   split_id: -1, # input proper split_id
-  train_json_file: "./data/thumos14/pseudo_annos_non75_all/T-75-{split_id}_E-non75-{split_id}_th-0.05_CLS_ep10.json", # variable
-  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
-  val_file_dir: './data/thumos14/annotations/train_75_test_25',
-  val_file_list: ["validation_75-{split_id}_tal.json", "validation_non75-{split_id}_tal.json"],
+#  json_file: "./data/thumos14/annotations/train_50_test_50/validation_non50-{split_id}_tal.json",
+   json_file: "./data/thumos14/annotations/train_50_test_50/validation_50-{split_id}_tal.json",
+  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_clip_trainval,
   class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
@@ -29,9 +27,7 @@ model: {
 opt: {
   learning_rate: 0.0001,
   # eta_min: 0.0001, # 1e-8
-  # epochs: 5,
-  # epochs: 30, # ver0
-  epochs: 10, # ver1
+  epochs: 30,
   warmup_epochs: 5,
   weight_decay: 0.05,
 }
@@ -58,4 +54,5 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: False,
 }
-output_folder: ./ckpt/TH_agn_PL_75
+# ckpt_folder: ./ckpt/path_to_ckpt
+ckpt_folder: "./ckpt/TH_agn_50/thumos14_clip_prop_50_tmpl_split{split_id}_1"

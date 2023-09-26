@@ -80,8 +80,12 @@ def main(args):
         map_location = lambda storage, loc: storage.cuda(cfg['devices'][0])
     )
     # load ema model instead
-    print("Loading from EMA model ...")
-    _load_state_dict = checkpoint['state_dict_ema']
+    # print("Loading from EMA model ...")
+    # _load_state_dict = checkpoint['state_dict_ema']
+
+    print("Loading from final model ...")
+    _load_state_dict = checkpoint['state_dict']
+
     load_state_dict = {}
     for k in _load_state_dict.keys():
         if 'prompt_learner.token' in k:
@@ -109,12 +113,15 @@ def main(args):
     )
     
     """6. evaluate proposal recall"""
+    output_dirpath = args['out_dir']
     model_cfg = ckpt_file.split('/')[-2]
     ckpt_cfg = ckpt_file.split('/')[-1].replace('.pth', '').replace('.tar', '')
     proposal_filename = f'{model_cfg}_{ckpt_cfg}.json'
-    output_dirpath = os.path.split(ckpt_file)[0]
-    proposal_dirname = 'proposal_' + os.path.split(val_dataset.json_file)[-1].replace('.json', '')
-    metric_dirname = 'metric_' + os.path.split(val_dataset.json_file)[-1].replace('.json', '')
+    tgt_eval_file = os.path.split(val_dataset.json_file)[-1].replace('.json', '')
+    if output_dirpath == '':
+        output_dirpath = os.path.split(ckpt_file)[0]
+    proposal_dirname = f'proposal_{tgt_eval_file}'
+    metric_dirname = f'metric_{tgt_eval_file}'
     proposal_filepath = os.path.join(output_dirpath, proposal_dirname, proposal_filename)
     metric_filepath = os.path.join(output_dirpath, metric_dirname, proposal_filename.replace('.json', '.csv'))
     os.makedirs(os.path.dirname(proposal_filepath), exist_ok=True)
@@ -156,6 +163,8 @@ if __name__ == '__main__':
     # parser.add_argument('ckpt', type=str, metavar='DIR',
     #                     help='path to a checkpoint')
     parser.add_argument('--ckpt', type=str, default='',
+                        help='path to a checkpoint')
+    parser.add_argument('--out_dir', type=str, default='',
                         help='path to a checkpoint')
     parser.add_argument('-e', '--epoch', type=int, default=-1,
                         help='checkpoint epoch')

@@ -58,4 +58,4 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: False,
 }
-output_folder: ./ckpt/agn_PL_50
+output_folder: ./ckpt/TH_agn_PL_50

@@ -192,7 +192,8 @@ def main(args):
             if len(val_file_list) != 0:
                 _ = valid_proposal_all_splits(
                     val_loader_list,
-                    model,
+                    # model,
+                    model_ema.module,
                     epoch,
                     evaluator_list=det_eval_list,
                     output_file=None,
@@ -203,7 +204,8 @@ def main(args):
             else:
                 _ = valid_one_epoch(
                     val_loader,
-                    model,
+                    # model,
+                    model_ema.module,
                     epoch,
                     evaluator=det_eval,
                     output_file=None,

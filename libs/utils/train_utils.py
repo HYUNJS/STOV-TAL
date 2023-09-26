@@ -262,7 +262,6 @@ class ModelEma(torch.nn.Module):
     def set(self, model):
         self._update(model, update_fn=lambda e, m: m)
 
-
 ################################################################################
 def train_one_epoch(
     train_loader,

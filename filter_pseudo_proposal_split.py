@@ -2,6 +2,7 @@ import os, json, argparse
 import os.path as osp
 from libs.utils import run_mRec_eval
 import pandas as pd
+import pandas as pd
 
 split_50_list = [f'50-{i}' for i in range(10)]
 split_non50_list = [f'non50-{i}' for i in range(10)]
@@ -39,7 +40,8 @@ gt_filepath_dict_all = {
     'anet13': get_gt_splits_filepath_dict('anet13'),
 }
 
-def filter_props(tgt_prop_fliepath, save_path, model_cfg_name, score_thresh, topx, thresh_flag, topx_flag):
+
+def filter_props(tgt_prop_fliepath, save_path, model_cfg_name, score_thresh, topx, thresh_flag, topx_flag, min_num=5):
     if thresh_flag:
         filter_cfg_name = f'th-{score_thresh:.2f}'
     if topx_flag:
@@ -53,11 +55,24 @@ def filter_props(tgt_prop_fliepath, save_path, model_cfg_name, score_thresh, top
     new_annos_num, ori_annos_num = 0, 0
     for vid in vids:
         result_df = pd.DataFrame(results[vid])
+        result_df = result_df.sort_values('score', ascending=False)
+        vinfo_ = vinfo[vinfo['video_id'] == vid]
+        duration = vinfo_['duration'].iloc[0]
         ori_annos_num += len(result_df)
         if thresh_flag:
-            result_df = result_df[result_df['score'] >= score_thresh]
+            mask = result_df['score'] >= score_thresh
+            if mask.sum() < min_num:
+                result_df = result_df[0:min_num]
+            else:
+                result_df = result_df[mask]
         if topx_flag:
             result_df = result_df[0:topx]
+
+        result_df['ss'] = result_df['segment'].apply(lambda x: max(x[0], 0))
+        result_df['es'] = result_df['segment'].apply(lambda x: min(x[1], duration))
+        ss = result_df['segment'].apply(lambda x: max(x[0], 0))
+        es = result_df['segment'].apply(lambda x: min(x[1], duration))
+        result_df['segment'] = [[s, e] for s, e in zip(ss, es)]
         new_result = result_df.to_dict('records')
         new_results[vid] = new_result
         new_annos_num += len(result_df)
@@ -98,6 +113,40 @@ def filter_props_all_cfg(tgt_filepath, save_path):
     # print(f'topx 50,{metric_in_csv9}')
     # print(f'topx 100,{metric_in_csv10}')
 
+def merge_agn_annos():
+    pl_filenames = sorted(os.listdir(tgt_save_path))
+
+    for pl_filename in pl_filenames:
+        pl_filepath = osp.join(tgt_save_path, pl_filename)
+        with open(pl_filepath, 'r') as fp:
+            pl_annos = json.load(fp)['results']
+
+        train_gt_filepath = gt_filepath_dict_all[dataset]['training'][Esplit.replace('non', '')]
+        with open(train_gt_filepath, 'r') as fp:
+            gt_annos = json.load(fp)['database']
+
+        tgt_gt_filepath = gt_filepath_dict_all[dataset]['training'][Esplit]
+        with open(tgt_gt_filepath, 'r') as fp:
+            tgt_gt_annos = json.load(fp)['database']
+
+        merged_annos = {}
+        for vid in gt_annos.keys():
+            annos = gt_annos[vid]['annotations'].copy()
+            for a in annos:
+                a['label_id'] = 0
+                a.pop('label_name')
+            merged_annos[vid] = gt_annos[vid]
+            merged_annos[vid]['annotations'] = annos
+
+        for vid in pl_annos.keys():
+            merged_annos[vid] = tgt_gt_annos[vid]
+            merged_annos[vid]['annotations'] = pl_annos[vid]
+
+        merged_anno_filename = pl_filename.replace(f"{subset}_", "")
+        pseudo_dirpath = f'./data/{dataset}/pseudo_annos_non{split_type}_all'
+        with open(osp.join(pseudo_dirpath, merged_anno_filename), 'w') as fp:
+            json.dump({'database': merged_annos}, fp)
+
 if __name__ == '__main__':
     '''
     python filter_pseudo_proposal_split.py  --dataset thumos14 --Esplit non50-0 --Tsplit 50-0 --subset training --model vifi
@@ -123,14 +172,20 @@ if __name__ == '__main__':
     assert model in ['clip', 'vificlip', 'vifi']
 
     split_type = Tsplit.split('-')[0]
-    
+    split_id = Tsplit.split('-')[1]
+    vinfo = pd.read_csv(f'./data/{dataset}/vinfo.csv')
+
     ## thumos14 path
-    th_ver='0'
+    # th_ver='0'
+    th_ver='0_ema'
     th_ep='035'
-    th14_ckpt_cfg = f'thumos14_{model}_prop_{Tsplit}_{th_ver}'
-    thumos14_train_prop = f'./ckpt/cls_agnostic_{split_type}/{th14_ckpt_cfg}/proposal_{subset}_{Esplit}_tal/{th14_ckpt_cfg}_epoch_{th_ep}.json'
-    thumos14_save_path = f'./ckpt/cls_agnostic_{split_type}/{th14_ckpt_cfg}/pseudo_labels'
-    
+    # th14_ckpt_cfg = f'thumos14_{model}_prop_{Tsplit}_{th_ver}'
+    # thumos14_train_prop = f'./ckpt/cls_agnostic_{split_type}/{th14_ckpt_cfg}/proposal_{subset}_{Esplit}_tal/{th14_ckpt_cfg}_epoch_{th_ep}.json'
+    # thumos14_save_path = f'./ckpt/cls_agnostic_{split_type}/{th14_ckpt_cfg}/pseudo_labels'
+    th14_ckpt_cfg = f'thumos14_{model}_prop_{split_type}_tmpl_split{split_id}_{th_ver}'
+    thumos14_train_prop = f'./ckpt/TH_agn_{split_type}/{th14_ckpt_cfg}/proposal_{subset}_{Esplit}_tal/{th14_ckpt_cfg}_epoch_{th_ep}.json'
+    thumos14_save_path = f'./ckpt/TH_agn_{split_type}/{th14_ckpt_cfg}/pseudo_labels'
+
     ## anet13 path
     anet_ver='1'
     anet_ep='008'
@@ -157,3 +212,6 @@ if __name__ == '__main__':
     for vid in tal_annos.keys():
         num_gt += len(tal_annos[vid]['annotations'])
     print(num_gt)
+
+    ## merge into agnostic anno
+    merge_agn_annos()

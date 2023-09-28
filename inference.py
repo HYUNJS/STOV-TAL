@@ -80,11 +80,11 @@ def main(args):
         map_location = lambda storage, loc: storage.cuda(cfg['devices'][0])
     )
     # load ema model instead
-    # print("Loading from EMA model ...")
-    # _load_state_dict = checkpoint['state_dict_ema']
+    print("Loading from EMA model ...")
+    _load_state_dict = checkpoint['state_dict_ema']
 
-    print("Loading from final model ...")
-    _load_state_dict = checkpoint['state_dict']
+    # print("Loading from final model ...")
+    # _load_state_dict = checkpoint['state_dict']
 
     load_state_dict = {}
     for k in _load_state_dict.keys():
@@ -113,7 +113,7 @@ def main(args):
     )
     
     """6. evaluate proposal recall"""
-    output_dirpath = args['out_dir']
+    output_dirpath = args.out_dir
     model_cfg = ckpt_file.split('/')[-2]
     ckpt_cfg = ckpt_file.split('/')[-1].replace('.pth', '').replace('.tar', '')
     proposal_filename = f'{model_cfg}_{ckpt_cfg}.json'

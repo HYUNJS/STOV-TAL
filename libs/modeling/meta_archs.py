@@ -10,7 +10,7 @@ from .blocks import MaskedConv1D, Scale, LayerNorm
 from .losses import ctr_diou_loss_1d, sigmoid_focal_loss
 
 from ..utils import batched_nms
-from ..clip import load_clip_to_cpu, PromptLearner, TextEncoder
+from ..clip import load_clip_to_cpu, PromptLearner, TextEncoder, tokenize
 
 class PtTransformerClsHead(nn.Module):
     """
@@ -202,12 +202,7 @@ class PtTransformer(nn.Module):
         label_filepaths,        # label filepaths for CLIP class name
         dataset_name,
         split_name,
-        CLIP_cls,
-        CLIP_dim,
-        CLIP_backbone_name,
-        CLIP_weight,
-        CLIP_softmax,
-        prompt_n_ctx,
+        CLIP_cfg,
         train_cfg,             # other cfg for training
         test_cfg               # other cfg for testing
     ):
@@ -222,7 +217,8 @@ class PtTransformer(nn.Module):
         # #classes = num_classes + 1 (background) with last category as background
         # e.g., num_classes = 10 -> 0, 1, ..., 9 as actions, 10 as background
         self.num_classes = num_classes
-        self.CLIP_cls = CLIP_cls
+        self.CLIP_cls = CLIP_cfg['CLIP_cls']
+        self.CLIP_inf_only = CLIP_cfg['inf_only']
 
         # check the feature pyramid and local attention window size
         self.max_seq_len = max_seq_len
@@ -323,9 +319,14 @@ class PtTransformer(nn.Module):
             }
         )
 
-        # classfication and regerssion heads
+        ## CLIP classifier
         self.label_filepaths = label_filepaths
-        if CLIP_cls:
+        CLIP_dim = CLIP_cfg['CLIP_dim']
+        CLIP_backbone_name = CLIP_cfg['CLIP_backbone_name']
+        CLIP_weight = CLIP_cfg['CLIP_weight']
+        CLIP_softmax = CLIP_cfg['CLIP_softmax']
+        prompt_n_ctx = CLIP_cfg['prompt_n_ctx']
+        if self.CLIP_cls:
             self.CLIP_softmax = CLIP_softmax
             self.set_cls_names(dataset_name, split_name)
             clip_model = load_clip_to_cpu(CLIP_backbone_name, CLIP_weight).to(torch.float)
@@ -334,6 +335,14 @@ class PtTransformer(nn.Module):
             self.text_encoder = TextEncoder(clip_model)
             self.logit_scale = clip_model.logit_scale
 
+        if self.CLIP_inf_only:
+            clip_model = load_clip_to_cpu(CLIP_backbone_name, CLIP_weight).to(torch.float)
+            self.register_buffer('token_embedding', clip_model.token_embedding, persistent=False)
+            self.register_buffer('text_encoder', TextEncoder(clip_model), persistent=False)
+            self.register_buffer('logit_scale', clip_model.logit_scale, persistent=False)
+            self.register_buffer('text_cls_head', clip_model.logit_scale, persistent=False)
+
+        # classfication and regerssion heads
         self.cls_head = PtTransformerClsHead(
             fpn_dim, head_dim, self.num_classes,
             kernel_size=head_kernel_size,
@@ -341,7 +350,7 @@ class PtTransformer(nn.Module):
             with_ln=head_with_ln,
             num_layers=head_num_layers,
             empty_cls=train_cfg['head_empty_cls'],
-            CLIP_cls=CLIP_cls,
+            CLIP_cls=self.CLIP_cls,
             CLIP_dim=CLIP_dim,
         )
         self.reg_head = PtTransformerRegHead(
@@ -369,7 +378,19 @@ class PtTransformer(nn.Module):
         self.cls_names = list(self.cls_mapper.keys())
         self.num_classes = len(self.cls_mapper)
 
-    def forward(self, video_list):
+    def set_CLIP_classifier(self, cls_name_list):
+        with torch.no_grad():
+            cls_name_tokens = tokenize(cls_name_list)  # n_cls x 77
+            embedding = self.token_embedding(cls_name_tokens).type(torch.float).to('cuda') # n_cls x 77 x D
+            text_feats = self.text_encoder(embedding, cls_name_tokens)
+            text_feats = F.normalize(text_feats, dim=-1)
+        self.text_cls_head = text_feats
+
+    def forward(self, video_list, cls_name_list=None):
+        if cls_name_list is not None:
+            self.set_CLIP_classifier(cls_name_list)
+            return
+
         # batch the video list into feats (B, C, T) and masks (B, 1, T)
         batched_inputs, batched_masks = self.preprocessing(video_list)
 

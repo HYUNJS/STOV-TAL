@@ -21,6 +21,10 @@ DEFAULTS = {
                 'all': './data/thumos14/annotations/thumos14_labels.csv',
                 'K400': './data/thumos14/annotations/thumos14_K400_overlap_labels.csv',
                 'nonK400': './data/thumos14/annotations/thumos14_K400_nonoverlap_labels.csv',
+                **{f"50-{i}": f"./data/thumos14/annotations/train_50_test_50/thumos14_50-{i}_overlap_labels.csv" for i in range(10)},
+                **{f"non50-{i}": f"./data/thumos14/annotations/train_50_test_50/thumos14_50-{i}_nonoverlap_labels.csv" for i in range(10)},
+                **{f"75-{i}": f"./data/thumos14/annotations/train_75_test_25/thumos14_75-{i}_overlap_labels.csv" for i in range(10)},
+                **{f"non75-{i}": f"./data/thumos14/annotations/train_75_test_25/thumos14_75-{i}_nonoverlap_labels.csv" for i in range(10)},
             },
             'fineaction': {
                 'all': './data/fineaction/annotations/fineaction_labels.csv',
@@ -31,6 +35,10 @@ DEFAULTS = {
                 'all': './data/anet13/annotations/anet13_labels.csv',
                 'K400': './data/anet13/annotations/anet13_K400_overlap_labels.csv',
                 'nonK400': './data/anet13/annotations/anet13_K400_nonoverlap_labels.csv',
+                **{f"50-{i}": f"./data/anet13/annotations/train_50_test_50/anet13_50-{i}_overlap_labels.csv" for i in range(10)},
+                **{f"non50-{i}": f"./data/anet13/annotations/train_50_test_50/anet13_50-{i}_nonoverlap_labels.csv" for i in range(10)},
+                **{f"75-{i}": f"./data/anet13/annotations/train_75_test_25/anet13_75-{i}_overlap_labels.csv" for i in range(10)},
+                **{f"non75-{i}": f"./data/anet13/annotations/train_75_test_25/anet13_75-{i}_nonoverlap_labels.csv" for i in range(10)},
             }
         },
         'val_json_file': '',
@@ -64,6 +72,17 @@ DEFAULTS = {
     "loader": {
         "batch_size": 8,
         "num_workers": 4,
+    },
+    # CLIP inference-only mode - used with class-agnostic proposal generator
+    "CLIP": {
+        "inf_only": False,
+        # classifier with CLIP
+        "CLIP_cls": False,
+        "CLIP_dim": 512,
+        "CLIP_backbone_name": "ViT-B/16",
+        "prompt_n_ctx": 0,
+        "CLIP_softmax": False,
+        "CLIP_weight": 'clip', # ./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth
     },
     # network architecture
     "model": {
@@ -106,14 +125,13 @@ DEFAULTS = {
         "use_abs_pe": False,
         # use rel position encoding (added to self-attention)
         "use_rel_pe": False,
-        # classifier with CLIP
-        "CLIP_cls": False,
-        # "CLIP_inf_only": False,
-        "CLIP_dim": 512,
-        "CLIP_backbone_name": "ViT-B/16",
-        "prompt_n_ctx": 0,
-        "CLIP_softmax": False,
-        "CLIP_weight": 'clip',
+        # # classifier with CLIP
+        # "CLIP_cls": False,
+        # "CLIP_dim": 512,
+        # "CLIP_backbone_name": "ViT-B/16",
+        # "prompt_n_ctx": 0,
+        # "CLIP_softmax": False,
+        # "CLIP_weight": 'clip',
     },
     "train_cfg": {
         # radius | none (if to use center sampling)
@@ -191,6 +209,7 @@ def _update_config(config):
     config["model"]["split_name"] = config["split_name"]
     config["model"]["train_cfg"] = config["train_cfg"]
     config["model"]["test_cfg"] = config["test_cfg"]
+    config["model"]["CLIP_cfg"] = config["CLIP"]
     return config
 
 def _update_split_id(config):

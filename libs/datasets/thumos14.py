@@ -9,7 +9,7 @@ from torch.utils.data import Dataset
 from torch.nn import functional as F
 
 from .datasets import register_dataset
-from .data_utils import truncate_feats
+from .data_utils import truncate_feats, parse_split_name
 
 @register_dataset("thumos14")
 class THUMOS14Dataset(Dataset):
@@ -41,6 +41,12 @@ class THUMOS14Dataset(Dataset):
         if json_file == '':
             json_file = val_json_file if 'validation' in split else train_json_file
         print(f'split: {split} | filepath: {json_file}')
+        subset_split_name = parse_split_name(json_file)
+        self.split_name = subset_split_name.replace('val', '').replace('train', '')
+        label_filepath = kwargs['label_filepaths']['thumos14'][self.split_name]
+        self.label_df = pd.read_csv(label_filepath)
+        self.cls_name_list = self.label_df['name'].tolist()
+
         # file path
         assert os.path.exists(feat_folder) and os.path.exists(json_file)
         assert isinstance(split, tuple) or isinstance(split, list)
@@ -70,7 +76,7 @@ class THUMOS14Dataset(Dataset):
         self.crop_ratio = crop_ratio
         self.class_agnostic = class_agnostic
         self.tiou_thresholds = tiou_thresholds
-        
+
         # load vinfo
         vinfo = pd.read_csv(osp.join(root_dir, 'thumos14/vinfo.csv'))
         self.use_i3d = 'i3d' in feat_folder
@@ -79,7 +85,7 @@ class THUMOS14Dataset(Dataset):
             for i in range(len(vinfo)):
                 vid, fps = vinfo.loc[i, ['video_id', 'ori_fps']]
                 self.vid2fps_dict[vid] = fps
-                
+
         # load database and select the subset
         # dict_db, label_dict = self._load_json_db(self.json_file)
         # assert len(label_dict) == num_classes

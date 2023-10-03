@@ -110,3 +110,24 @@ def truncate_feats(
     data_dict['labels'] = data_dict['labels'][seg_idx].clone()
 
     return data_dict
+
+
+def parse_split_name(anno_filename, cfg):
+    if anno_filename == 'validation_tal.json':
+        split_name = 'val_all'
+    elif anno_filename == 'training_tal.json':
+        split_name = 'train_all'
+    elif '_K400_tal.json' in anno_filename:
+        split_name = 'val_K400' if 'validation_' in anno_filename else 'train_K400'
+    elif '_nonK400_tal.json' in anno_filename:
+        split_name = 'val_nonK400' if 'validation_' in anno_filename else 'train_nonK400'
+    elif '50-' in anno_filename or '75-' in anno_filename:
+        split_cfg = anno_filename.split('_')[1]
+        split_name = f'val_{split_cfg}' if 'validation_' in anno_filename else f'train_{split_cfg}'
+    elif cfg['split_name'] != '':
+        split_name = cfg['split_name']
+    else:
+        raise NotImplementedError(f"{anno_filename} is not the case")
+    print("split", split_name)
+
+    return split_name

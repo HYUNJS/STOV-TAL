@@ -15,33 +15,13 @@ from torch.utils.tensorboard import SummaryWriter
 
 # our code
 from libs.core import load_config, merge_args
-from libs.datasets import make_dataset, make_data_loader
+from libs.datasets import make_dataset, make_data_loader, parse_split_name
 from libs.modeling import make_meta_arch
 from libs.utils import (train_one_epoch, valid_one_epoch, ANETdetection, valid_one_epoch, valid_proposal_all_splits,
                         save_checkpoint, make_optimizer, make_scheduler,
                         fix_random_seed, ModelEma, ANETdetectionProp)
 from tqdm import tqdm
 
-def parse_split_name(val_filename, cfg):
-    if val_filename == 'validation_tal.json':
-        split_name = 'val_all'
-    elif val_filename == 'validation_K400_tal.json':
-        split_name = 'val_K400'
-    elif val_filename == 'validation_nonK400_tal.json':
-        split_name = 'val_nonK400'
-    elif '50-' in val_filename:
-        split_cfg = val_filename.split('_')[1]
-        split_name = f'val_{split_cfg}'
-    elif '75-' in val_filename:
-        split_cfg = val_filename.split('_')[1]
-        split_name = f'val_{split_cfg}'
-    elif cfg['split_name'] != '':
-        split_name = cfg['split_name']
-    else:
-        raise NotImplementedError(f"{val_filename} is not the case")
-    print("split", split_name)
-    
-    return split_name
     
 ################################################################################
 def main(args):

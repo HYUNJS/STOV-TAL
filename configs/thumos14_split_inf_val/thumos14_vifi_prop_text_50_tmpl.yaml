@@ -19,14 +19,15 @@ dataset: {
   max_seq_len: 2304,
   default_fps: 30,
 }
+CLIP_INF: {
+  inf_only: True,
+  CLIP_softmax: False,
+  CLIP_weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
+}
 model: {
   fpn_type: identity,
   max_buffer_len_factor: 6.0,
   n_mha_win_size: 19,
-  ## CLIP config
-#  CLIP_inf_only: True,
-  CLIP_softmax: False,
-  CLIP_weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
 }
 opt: {
   learning_rate: 0.0001,

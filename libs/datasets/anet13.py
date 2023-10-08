@@ -65,7 +65,7 @@ class ActivityNetDataset(Dataset):
         ## cls-split
         subset_split_name = parse_split_name(json_file, None)
         self.split_name = subset_split_name.replace('val_', '').replace('train_', '')
-        label_filepath = kwargs['label_filepaths']['thumos14'][self.split_name]
+        label_filepath = kwargs['label_filepaths']['anet13'][self.split_name]
         self.label_df = pd.read_csv(label_filepath)
         self.cls_name_list = self.label_df['name'].tolist()
 

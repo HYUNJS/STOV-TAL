@@ -113,6 +113,7 @@ def truncate_feats(
 
 
 def parse_split_name(anno_filename, cfg):
+    anno_filename = anno_filename.split('/')[-1]
     if anno_filename == 'validation_tal.json':
         split_name = 'val_all'
     elif anno_filename == 'training_tal.json':

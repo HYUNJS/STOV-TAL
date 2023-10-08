@@ -17,7 +17,7 @@ import torch.utils.data
 from libs.core import load_config, merge_args
 from libs.datasets import make_dataset, make_data_loader
 from libs.modeling import make_meta_arch
-from libs.utils import valid_one_epoch, ANETdetection, fix_random_seed, run_mRec_eval
+from libs.utils import valid_one_epoch, ANETdetection, fix_random_seed, run_mRec_eval, run_mAP_eval
 
 
 
@@ -79,12 +79,14 @@ def main(args):
         ckpt_file,
         map_location = lambda storage, loc: storage.cuda(cfg['devices'][0])
     )
-    # load ema model instead
-    print("Loading from EMA model ...")
-    _load_state_dict = checkpoint['state_dict_ema']
 
-    # print("Loading from final model ...")
-    # _load_state_dict = checkpoint['state_dict']
+    load_ema = cfg['test_cfg']['load_ema']
+    if load_ema:
+        print("Loading from EMA model ...")
+        _load_state_dict = checkpoint['state_dict_ema']
+    else:
+        print("Loading from final model ...")
+        _load_state_dict = checkpoint['state_dict']
 
     load_state_dict = {}
     for k in _load_state_dict.keys():
@@ -97,6 +99,7 @@ def main(args):
     del checkpoint
 
     """5. Test the model"""
+    CLIP_inf_only = cfg['CLIP']['inf_only']
     print("\nStart testing model {:s} ...".format(cfg['model_name']))
     start = time.time()
     results = valid_one_epoch(
@@ -109,7 +112,8 @@ def main(args):
         tb_writer=None,
         print_freq=args.print_freq,
         return_output=True,
-        verbose=False
+        verbose=False,
+        CLIP_inf_only=CLIP_inf_only,
     )
     
     """6. evaluate proposal recall"""
@@ -120,8 +124,26 @@ def main(args):
     tgt_eval_file = os.path.split(val_dataset.json_file)[-1].replace('.json', '')
     if output_dirpath == '':
         output_dirpath = os.path.split(ckpt_file)[0]
-    proposal_dirname = f'proposal_{tgt_eval_file}'
-    metric_dirname = f'metric_{tgt_eval_file}'
+
+    if CLIP_inf_only:
+        clip_topk = cfg['CLIP']['topk']
+        if clip_topk > 1:
+            proposal_dirname = f'proposal_CLIP_clsK{clip_topk}_{tgt_eval_file}'
+            metric_dirname = f'metric_CLIP_clsK{clip_topk}_{tgt_eval_file}'
+        else:
+            proposal_dirname = f'proposal_CLIP_cls_{tgt_eval_file}'
+            metric_dirname = f'metric_CLIP_cls_{tgt_eval_file}'
+    elif cfg['dataset']['class_agnostic']:
+        proposal_dirname = f'proposal_{tgt_eval_file}'
+        metric_dirname = f'metric_{tgt_eval_file}'
+    else:
+        proposal_dirname = f'proposal_cls_{tgt_eval_file}'
+        metric_dirname = f'metric_cls_{tgt_eval_file}'
+
+    if load_ema:
+        proposal_dirname += '_ema'
+        metric_dirname += '_ema'
+
     proposal_filepath = os.path.join(output_dirpath, proposal_dirname, proposal_filename)
     metric_filepath = os.path.join(output_dirpath, metric_dirname, proposal_filename.replace('.json', '.csv'))
     os.makedirs(os.path.dirname(proposal_filepath), exist_ok=True)
@@ -129,25 +151,33 @@ def main(args):
     with open(proposal_filepath, 'w') as fp:
         json.dump(results, fp)
     
-    tiou_thresholds = [0.5]
+    # tiou_thresholds = [0.5]
+    tiou_thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
     score_thresh = 0.0
     dataset_name = cfg['dataset_name']
-    _, _, results_dict = run_mRec_eval(val_dataset.json_file, proposal_filepath, tiou_thresholds, score_thresh,
-                                       dataset_name, num_workers=cfg['loader']['num_workers'], split=cfg['val_split'][0])
-    
-    pd.DataFrame(results_dict, index=[0]).to_csv(metric_filepath, index=False)
-    
-    R1x = results_dict['R@1x']
-    R5x = results_dict['R@5x']
-    R100 = results_dict['R@100']
-    R300 = results_dict['R@300']
-    R1000 = results_dict['R@1000']
-    print(f"R@1x: {R1x:.3f}")
-    print(f"R@5x: {R5x:.3f}")
-    print(f"R@100: {R100:.3f}")
-    print(f"R@300: {R300:.3f}")
-    print(f"R@1000: {R1000:.3f}")
-     
+    if cfg['dataset']['class_agnostic']:
+        _, _, results_dict = run_mRec_eval(val_dataset.json_file, proposal_filepath, tiou_thresholds, score_thresh,
+                                           dataset_name, num_workers=cfg['loader']['num_workers'], split=cfg['val_split'][0])
+
+        pd.DataFrame(results_dict, index=[0]).to_csv(metric_filepath, index=False)
+
+        R1x, R5x = results_dict['R@1x'], results_dict['R@5x']
+        R100, R300, R1000 = results_dict['R@100'], results_dict['R@300'], results_dict['R@1000']
+        print(f"R@1x: {R1x:.3f}")
+        print(f"R@5x: {R5x:.3f}")
+        print(f"R@100: {R100:.3f}")
+        print(f"R@300: {R300:.3f}")
+        print(f"R@1000: {R1000:.3f}")
+    else:
+        mAPs = run_mAP_eval(val_dataset.json_file, proposal_filepath, tiou_thresholds, score_thresh,
+                                           dataset_name, num_workers=cfg['loader']['num_workers'], split=cfg['val_split'][0])
+
+        results_dict = {'split_name': val_dataset.split_name,
+                        **{f"mAP@{tiou}": mAPs[i] for i, tiou in enumerate(tiou_thresholds)},
+                        'mAP@avg': mAPs.mean()
+                        }
+        pd.DataFrame(results_dict, index=[0]).to_csv(metric_filepath, index=False)
+
     end = time.time()
     print("All done! Total time: {:0.2f} sec".format(end - start))
     return

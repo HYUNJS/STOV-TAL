@@ -3,7 +3,8 @@ train_split: ['training']
 val_split: ['training']
 dataset: {
   split_id: -1, # input proper split_id
-  json_file: "./data/thumos14/annotations/train_50_test_50/training_non50-{split_id}_tal.json",
+#  json_file: "./data/thumos14/annotations/train_50_test_50/training_non50-{split_id}_tal.json",
+  json_file: "./data/thumos14/annotations/train_50_test_50/training_n50-{split_id}_tal.json",
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   class_agnostic: True,
   file_prefix: ~,

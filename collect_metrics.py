@@ -32,59 +32,67 @@ def get_one_k400_metric(tgt_split, tgt_ep_filename, tgt_ep, tgt_subset):
 
     return df
 
-def get_all_split():
+def get_split_val(epochs):
+    tgt_subset = 'validation'
     df_all = []
-
-    tgt_subset = 'validation'
-    tgt_split = f'non{split}'
-    df = get_one_split_metric(tgt_split, ep5_filename, 5, tgt_subset)
-    df_all.append(df)
-    df = get_one_split_metric(tgt_split, ep15_filename, 15, tgt_subset)
-    df_all.append(df)
-
-    tgt_subset = 'validation'
-    tgt_split = f'{split}'
-    df = get_one_split_metric(tgt_split, ep5_filename, 5, tgt_subset)
-    df_all.append(df)
-    df = get_one_split_metric(tgt_split, ep15_filename, 15, tgt_subset)
-    df_all.append(df)
-
-    tgt_subset = 'training'
-    tgt_split = f'non{split}'
-    train_df = get_one_split_metric(tgt_split, ep15_filename, 15, tgt_subset)
+    for epoch in epochs:
+        ep_filename = f'epoch_{epoch:03d}.csv'
+        tgt_split = f'non{split}'
+        df = get_one_split_metric(tgt_split, ep_filename, epoch, tgt_subset)
+        df_all.append(df)
+        tgt_split = f'{split}'
+        df = get_one_split_metric(tgt_split, ep_filename, epoch, tgt_subset)
+        df_all.append(df)
 
     val_df = pd.concat(df_all)
 
-    return train_df, val_df
+    return val_df
 
-def get_all_k400():
-    df_all = []
-
-    tgt_subset = 'validation'
-    tgt_split = f'non{split}'
-    df = get_one_k400_metric(tgt_split, ep15_filename, 15, tgt_subset)
-    df_all.append(df)
-
-    tgt_subset = 'validation'
-    tgt_split = f'{split}'
-    df = get_one_k400_metric(tgt_split, ep15_filename, 15, tgt_subset)
-    df_all.append(df)
-
+def get_split_train(epoch):
     tgt_subset = 'training'
     tgt_split = f'non{split}'
-    train_df = get_one_k400_metric(tgt_split, ep15_filename, 15, tgt_subset)
+    ep_filename = f'epoch_{epoch:03d}.csv'
+    train_df = get_one_split_metric(tgt_split, ep_filename, epoch, tgt_subset)
+
+    return train_df
+
+def get_k400_val(epochs):
+    tgt_subset = 'validation'
+    df_all = []
+    for epoch in epochs:
+        ep_filename = f'epoch_{epoch:03d}.csv'
+        tgt_split = f'non{split}'
+        df = get_one_k400_metric(tgt_split, ep_filename, epoch, tgt_subset)
+        df_all.append(df)
+        tgt_split = f'{split}'
+        df = get_one_k400_metric(tgt_split, ep_filename, epoch, tgt_subset)
+        df_all.append(df)
+
     val_df = pd.concat(df_all)
 
-    return train_df, val_df
+    return val_df
+
+def get_k400_train(epoch):
+    tgt_subset = 'training'
+    tgt_split = f'non{split}'
+    ep_filename = f'epoch_{epoch:03d}.csv'
+    train_df = get_one_k400_metric(tgt_split, ep_filename, epoch, tgt_subset)
+
+    return train_df
+
 
 def eda_split_all():
-    train_df, val_df = get_all_split()
+    epochs = [25, 30, 35, 40, 45]
+    val_df = get_split_val(epochs)
+    # train_df = get_split_train()
     df_gb = val_df.groupby(['epoch', 'split'])
-    df_gb.get_group((15, 'non50')).mean()
+    # df_gb.get_group((15, 'non50')).mean()
     df_gb
 
 def eda_k400():
-    train_df, val_df = get_all_k400()
+    epoch = 45
+    # train_df = get_k400_train(epoch)
+    val_df = get_k400_val(epoch)
     val_df
 
 
@@ -96,17 +104,81 @@ if __name__ == '__main__':
 
     # model = 'clip'
     model = 'vifi'
+    # load_ema = False
+    load_ema = True
 
-    # split = '50'
+    split = '50'
     # split = '75'
-    split = 'k400'
+    # split = 'k400'
+    use_PL = False
 
-    tgt_dir = f'ckpt/TH_agn_{split}'
-    ckpt_ver = '1'
-    ep5_filename = 'epoch_005.csv'
-    ep15_filename = 'epoch_015.csv'
-
-    if split == 'k400':
-        eda_k400()
+    if use_PL:
+        tgt_dir = f'ckpt/TH_agn_PL_{split}'
     else:
-        eda_split_all()
+        tgt_dir = f'ckpt/TH_agn_{split}'
+
+    # ckpt_ver = '1'
+    # ckpt_ver = '2_ema'
+    ckpt_ver = '0_ema'
+    # ckpt_ver = '0_ema_th0.05'
+    epoch = 35
+    # epoch = 15
+    topk = 1
+
+    tgt_subset = 'validation'
+    tgt_split = f"non{split}"
+    # tgt_split = f"{split}"
+    tgt_ep_filename = f'epoch_{epoch:03d}.csv'
+    if topk == 1:
+        metric_path = f'metric_CLIP_cls_{tgt_subset}_{tgt_split}-{{split_id}}_tal'
+    else:
+        metric_path = f'metric_CLIP_clsK2_{tgt_subset}_{tgt_split}-{{split_id}}_tal'
+    if load_ema:
+        metric_path += '_ema'
+
+    df_list = []
+    for split_id in range(10):
+        if use_PL:
+            tgt_cfg = f"{dataset}_{model}_prop_{split}_pseudo_tmpl_split{split_id}_{ckpt_ver}"
+        else:
+            tgt_cfg = f"{dataset}_{model}_prop_{split}_tmpl_split{split_id}_{ckpt_ver}"
+        tgt_metric_path = metric_path.format(split_id=split_id)
+        tgt_filepath = osp.join(tgt_dir, tgt_cfg, tgt_metric_path, f"{tgt_cfg}_{tgt_ep_filename}")
+        df = pd.read_csv(tgt_filepath)
+        df['split_id'] = split_id
+        df_list.append(df)
+    dfs = pd.concat(df_list)
+    dfs.loc[len(dfs)] = ['avg', *dfs.mean().values.tolist()]
+    dfs
+    # if split == 'k400':
+    #     eda_k400()
+    # else:
+    #     eda_split_all()
+
+    # eda_split_all()
+
+    # ckpt_ver = '0_ema'
+    # epochs = [35]
+    # val_df_v0 = get_split_val(epochs)
+    #
+    # ckpt_ver = '2_ema'
+    # epochs = [45]
+    # val_df_v2 = get_split_val(epochs)
+    #
+    # ckpt_ver = '3_ema'
+    # epochs = [55]
+    # val_df_v3 = get_split_val(epochs)
+    #
+    # val_df_v3
+    #
+    # val_df = pd.concat([val_df_v0, val_df_v2, val_df_v3])
+    # val_df_gb = val_df.groupby(['epoch', 'split'])
+    # # val_df_gb.mean()
+    #
+    # ckpt_ver = '0_ema'
+    # train_df_v0 = get_split_train(35)
+    # ckpt_ver = '2_ema'
+    # train_df_v2 = get_split_train(45)
+    # train_df = pd.concat([train_df_v0, train_df_v2])
+    # train_df
+    # train_df_gb = train_df.groupby(['epoch', 'split'])

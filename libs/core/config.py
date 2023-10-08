@@ -78,11 +78,14 @@ DEFAULTS = {
         "inf_only": False,
         # classifier with CLIP
         "CLIP_cls": False,
-        "CLIP_dim": 512,
-        "CLIP_backbone_name": "ViT-B/16",
+        "dim": 512,
+        "backbone_name": "ViT-B/16",
         "prompt_n_ctx": 0,
-        "CLIP_softmax": False,
-        "CLIP_weight": 'clip', # ./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth
+        "weight": 'clip', # ./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth
+        ## inference details
+        "softmax": False,
+        "topk": 1,
+        "nms": False,
     },
     # network architecture
     "model": {
@@ -125,13 +128,6 @@ DEFAULTS = {
         "use_abs_pe": False,
         # use rel position encoding (added to self-attention)
         "use_rel_pe": False,
-        # # classifier with CLIP
-        # "CLIP_cls": False,
-        # "CLIP_dim": 512,
-        # "CLIP_backbone_name": "ViT-B/16",
-        # "prompt_n_ctx": 0,
-        # "CLIP_softmax": False,
-        # "CLIP_weight": 'clip',
     },
     "train_cfg": {
         # radius | none (if to use center sampling)
@@ -153,6 +149,7 @@ DEFAULTS = {
         "run_val": False
     },
     "test_cfg": {
+        "load_ema": True,
         "pre_nms_thresh": 0.001,
         "pre_nms_topk": 5000,
         "iou_threshold": 0.1,

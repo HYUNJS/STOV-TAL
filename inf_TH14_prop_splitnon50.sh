@@ -6,7 +6,7 @@ epoch=$1
 subset=$2
 
 ## split option
-split="50"
+split="non50"
 #split="75"
 
 ## dataset option
@@ -20,7 +20,7 @@ model='vifi'
 echo $dataset $split $model
 sleep 5;
 
-devices=(0 0 0 0 0 0 0 0 0 0)
+#devices=(1 1 1 1 1 1 1 1 1 1)
 for ((i=0;i<=9;i++))
 do
     echo $i

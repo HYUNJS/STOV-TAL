@@ -461,7 +461,8 @@ def valid_one_epoch(
     return_output = False,
     verbose=True,
     cls_agnostic=False,
-    split_name='validation'
+    split_name='validation',
+    CLIP_inf_only=False,
 ):
     """Test the model on the validation set"""
     # either evaluate the results or save the results
@@ -469,6 +470,10 @@ def valid_one_epoch(
 
     # switch to evaluate mode
     model.eval()
+
+    ## init CLIP classifier
+    if CLIP_inf_only:
+        model(None, val_loader.dataset.cls_name_list)
 
     # gather all stats and evaluate
     results = forward_validation(model, val_loader)

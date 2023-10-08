@@ -759,7 +759,8 @@ def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, n
     pred_tgt = pred_df[pred_df['score'] >= thresh]
 
     mAPs, mRxs, mRs = evaluator.evaluate_mAP(pred_tgt)
-    mAP = mAPs[0]
-    print(mAP)
+    print(mAPs)
+    # mAP = mAPs[0]
+    # print(mAP)
 
     return mAPs

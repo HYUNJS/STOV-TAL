@@ -55,4 +55,5 @@ test_cfg: {
   multiclass_nms: False,
 }
 # ckpt_folder: ./ckpt/path_to_ckpt
-ckpt_folder: "./ckpt/TH_agn_50/thumos14_clip_prop_50_tmpl_split{split_id}_1"
+#ckpt_folder: "./ckpt/TH_agn_50/thumos14_clip_prop_50_tmpl_split{split_id}_1"
+ckpt_folder: "./ckpt/TH_agn_50/thumos14_clip_prop_50_tmpl_split{split_id}_2_ema"

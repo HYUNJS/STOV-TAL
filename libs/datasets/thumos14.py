@@ -41,11 +41,6 @@ class THUMOS14Dataset(Dataset):
         if json_file == '':
             json_file = val_json_file if 'validation' in split else train_json_file
         print(f'split: {split} | filepath: {json_file}')
-        subset_split_name = parse_split_name(json_file)
-        self.split_name = subset_split_name.replace('val', '').replace('train', '')
-        label_filepath = kwargs['label_filepaths']['thumos14'][self.split_name]
-        self.label_df = pd.read_csv(label_filepath)
-        self.cls_name_list = self.label_df['name'].tolist()
 
         # file path
         assert os.path.exists(feat_folder) and os.path.exists(json_file)
@@ -62,6 +57,13 @@ class THUMOS14Dataset(Dataset):
         # split / training mode
         self.split = split
         self.is_training = is_training
+
+        ## cls-split
+        subset_split_name = parse_split_name(json_file, None)
+        self.split_name = subset_split_name.replace('val_', '').replace('train_', '')
+        label_filepath = kwargs['label_filepaths']['thumos14'][self.split_name]
+        self.label_df = pd.read_csv(label_filepath)
+        self.cls_name_list = self.label_df['name'].tolist()
 
         # features meta info
         self.feat_stride = feat_stride

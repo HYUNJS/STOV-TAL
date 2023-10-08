@@ -2,8 +2,8 @@ dataset_name: thumos14
 train_split: ['training']
 val_split: ['training']
 dataset: {
-#  json_file: ./data/thumos14/annotations/training_K400_tal.json,
-  json_file: ./data/thumos14/annotations/training_nonK400_tal.json,
+  json_file: ./data/thumos14/annotations/training_K400_tal.json,
+#  json_file: ./data/thumos14/annotations/training_nonK400_tal.json,
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_clip_trainval,
   class_agnostic: True,
   file_prefix: ~,
@@ -56,4 +56,5 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/TH_agn_k400
-ckpt_folder: ./ckpt/TH_agn_k400/thumos14_clip_prop_k400_1
+#ckpt_folder: ./ckpt/TH_agn_k400/thumos14_clip_prop_k400_1
+ckpt_folder: ./ckpt/TH_agn_k400/thumos14_clip_prop_k400_2_ema

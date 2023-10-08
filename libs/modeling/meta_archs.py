@@ -4,6 +4,7 @@ import pandas as pd
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torchvision.ops import roi_align
 
 from .models import register_meta_arch, make_backbone, make_neck, make_generator
 from .blocks import MaskedConv1D, Scale, LayerNorm
@@ -252,7 +253,7 @@ class PtTransformer(nn.Module):
         self.test_min_score = test_cfg['min_score']
         self.test_max_seg_num = test_cfg['max_seg_num']
         self.test_nms_method = test_cfg['nms_method']
-        assert self.test_nms_method in ['soft', 'hard', 'none']
+        assert self.test_nms_method in ['soft', 'hard', 'none', 'thresh']
         self.test_duration_thresh = test_cfg['duration_thresh']
         self.test_multiclass_nms = test_cfg['multiclass_nms']
         self.test_nms_sigma = test_cfg['nms_sigma']
@@ -321,13 +322,14 @@ class PtTransformer(nn.Module):
 
         ## CLIP classifier
         self.label_filepaths = label_filepaths
-        CLIP_dim = CLIP_cfg['CLIP_dim']
-        CLIP_backbone_name = CLIP_cfg['CLIP_backbone_name']
-        CLIP_weight = CLIP_cfg['CLIP_weight']
-        CLIP_softmax = CLIP_cfg['CLIP_softmax']
-        prompt_n_ctx = CLIP_cfg['prompt_n_ctx']
+        CLIP_dim = CLIP_cfg['dim']
+        CLIP_backbone_name = CLIP_cfg['backbone_name']
+        CLIP_weight = CLIP_cfg['weight']
+        self.CLIP_softmax = CLIP_cfg['softmax']
+        self.CLIP_topk = CLIP_cfg['topk']
+        self.CLIP_nms = CLIP_cfg['nms']
         if self.CLIP_cls:
-            self.CLIP_softmax = CLIP_softmax
+            prompt_n_ctx = CLIP_cfg['prompt_n_ctx']
             self.set_cls_names(dataset_name, split_name)
             clip_model = load_clip_to_cpu(CLIP_backbone_name, CLIP_weight).to(torch.float)
             self.prompt_learner = PromptLearner(None, prompt_n_ctx, self.cls_names, clip_model)
@@ -337,10 +339,16 @@ class PtTransformer(nn.Module):
 
         if self.CLIP_inf_only:
             clip_model = load_clip_to_cpu(CLIP_backbone_name, CLIP_weight).to(torch.float)
-            self.register_buffer('token_embedding', clip_model.token_embedding, persistent=False)
-            self.register_buffer('text_encoder', TextEncoder(clip_model), persistent=False)
-            self.register_buffer('logit_scale', clip_model.logit_scale, persistent=False)
-            self.register_buffer('text_cls_head', clip_model.logit_scale, persistent=False)
+            token_embedding = clip_model.token_embedding
+            text_encoder = TextEncoder(clip_model)
+            logit_scale = clip_model.logit_scale
+            self.token_embedding = token_embedding
+            self.text_encoder = text_encoder
+            # self.register_buffer('token_embedding', token_embedding.weight, persistent=False)
+            # self.register_buffer('text_encoder', text_encoder.weight, persistent=False)
+            self.register_buffer('logit_scale', logit_scale, persistent=False)
+            self.register_buffer('text_cls_head', None, persistent=False)
+            self.cls_name_list = []
 
         # classfication and regerssion heads
         self.cls_head = PtTransformerClsHead(
@@ -378,13 +386,14 @@ class PtTransformer(nn.Module):
         self.cls_names = list(self.cls_mapper.keys())
         self.num_classes = len(self.cls_mapper)
 
+    @torch.no_grad()
     def set_CLIP_classifier(self, cls_name_list):
-        with torch.no_grad():
-            cls_name_tokens = tokenize(cls_name_list)  # n_cls x 77
-            embedding = self.token_embedding(cls_name_tokens).type(torch.float).to('cuda') # n_cls x 77 x D
-            text_feats = self.text_encoder(embedding, cls_name_tokens)
-            text_feats = F.normalize(text_feats, dim=-1)
+        cls_name_tokens = tokenize(cls_name_list).to(self.device)  # n_cls x 77
+        embedding = self.token_embedding(cls_name_tokens).type(torch.float).to(self.device) # n_cls x 77 x D
+        text_feats = self.text_encoder(embedding, cls_name_tokens)
+        text_feats = F.normalize(text_feats, dim=-1)
         self.text_cls_head = text_feats
+        self.cls_name_list = cls_name_list
 
     def forward(self, video_list, cls_name_list=None):
         if cls_name_list is not None:
@@ -713,6 +722,75 @@ class PtTransformer(nn.Module):
         # step 3: postprocssing
         results = self.postprocessing(results)
 
+        ## step 4 (optional) : classification with CLIP
+        if self.CLIP_inf_only:
+            for i in range(len(results)):
+                result = results[i]
+                feats = video_list[i]['feats']
+                fps, duration = vid_fps[i], vid_lens[i]
+                stride, window = vid_ft_stride[i], vid_ft_nframes[i]
+
+                ## convert segments in second into feature unit
+                segms = result['segments'] * fps
+                segms[:, 1] = (segms[:, 1] + stride - window)
+                segms /= stride
+                segms[:, 1] = segms[:, 1].clamp(min=segms[:, 0])
+                equal_mask = segms[:, 0] == segms[:, 1]
+                segms[equal_mask, 1] = segms[equal_mask, 1] + 0.1
+
+                ## extend into 2D box with height=1
+                segms_ys = torch.zeros_like(segms)
+                segms_ys[:, 1] = 1
+                bboxs = torch.stack([segms[:, 0], segms_ys[:, 0], segms[:, 1], segms_ys[:, 1]], dim=1).to(self.device)
+
+                ## roi align features
+                feats_ = feats.unsqueeze(0).unsqueeze(2)
+                roi_feats = roi_align(feats_, [bboxs], (1, 1), aligned=True).flatten(1, -1)
+
+                ## compute cls scores - N x C
+                roi_feats = F.normalize(roi_feats, dim=-1)
+                cos_sim = torch.einsum('T D, C D -> T C', roi_feats, self.text_cls_head)
+                if self.CLIP_softmax:
+                    cls_score_map = (cos_sim * self.logit_scale.exp()).softmax(dim=-1)
+                else:
+                    cls_score_map = (cos_sim + 1) / 2
+
+                ## select top-k class - N x K
+                topk_cls_scores, topk_cls_idxs = torch.topk(cls_score_map.cpu(), k=self.CLIP_topk, dim=1)
+
+                ## geometric mean between prop_score and cls_score - N x K
+                log_prop_scores = result['scores'].log().reshape(-1, 1)
+                log_cls_scores = topk_cls_scores.log()
+                norm_scores = torch.exp((log_prop_scores + log_cls_scores) / 2)
+
+                ## repeat K for final output
+                result['segments'] = result['segments'].repeat(self.CLIP_topk, 1)
+                result['scores'] = norm_scores.permute(1, 0).flatten(0)
+                result['labels'] = topk_cls_idxs.permute(1, 0).flatten(0)
+
+                ## run cls-wise NMS
+                if self.CLIP_nms:
+                    ## TODO.
+                    segs = result['segments']
+                    scores = result['scores']
+                    labels = result['labels']
+
+                    # 2: batched nms (only implemented on CPU)
+                    segs, scores, labels = batched_nms(
+                        segs, scores, labels,
+                        self.test_iou_threshold,
+                        self.test_min_score,
+                        self.test_max_seg_num,
+                        use_soft_nms=True,
+                        multiclass=True,
+                        sigma=self.test_nms_sigma,
+                        voting_thresh=self.test_voting_thresh
+                    )
+
+                    result['segments'] = segs
+                    result['scores'] = scores
+                    result['labels'] = labels
+
         return results
 
     @torch.no_grad()
@@ -798,7 +876,12 @@ class PtTransformer(nn.Module):
             segs = results_per_vid['segments'].detach().cpu()
             scores = results_per_vid['scores'].detach().cpu()
             labels = results_per_vid['labels'].detach().cpu()
-            if self.test_nms_method != 'none':
+            if self.test_nms_method == 'thresh':
+                mask = scores >= self.test_min_score
+                segs = segs[mask]
+                scores = scores[mask]
+                labels = labels[mask]
+            elif self.test_nms_method != 'none':
                 # 2: batched nms (only implemented on CPU)
                 segs, scores, labels = batched_nms(
                     segs, scores, labels,
@@ -810,6 +893,7 @@ class PtTransformer(nn.Module):
                     sigma = self.test_nms_sigma,
                     voting_thresh = self.test_voting_thresh
                 )
+
             # 3: convert from feature grids to seconds
             if segs.shape[0] > 0:
                 segs = (segs * stride + 0.5 * nframes) / fps

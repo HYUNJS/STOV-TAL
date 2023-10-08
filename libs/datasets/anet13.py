@@ -2,13 +2,14 @@ import os
 import json
 import h5py
 import numpy as np
+import pandas as pd
 
 import torch
 from torch.utils.data import Dataset
 from torch.nn import functional as F
 
 from .datasets import register_dataset
-from .data_utils import truncate_feats
+from .data_utils import truncate_feats, parse_split_name
 from ..utils import remove_duplicate_annotations
 
 @register_dataset("anet13")
@@ -60,6 +61,13 @@ class ActivityNetDataset(Dataset):
         # split / training mode
         self.split = split
         self.is_training = is_training
+
+        ## cls-split
+        subset_split_name = parse_split_name(json_file, None)
+        self.split_name = subset_split_name.replace('val_', '').replace('train_', '')
+        label_filepath = kwargs['label_filepaths']['thumos14'][self.split_name]
+        self.label_df = pd.read_csv(label_filepath)
+        self.cls_name_list = self.label_df['name'].tolist()
 
         # features meta info
         self.feat_stride = feat_stride

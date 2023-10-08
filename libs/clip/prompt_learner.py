@@ -53,7 +53,7 @@ def load_clip_to_cpu(backbone_name, CLIP_weight):
             _load_state_dict[new_k] = load_state_dict[k]
         load_state_dict = _load_state_dict
         msg = model.load_state_dict(load_state_dict, strict=False)
-        print("Loading ViFiCLIP weight........")
+        print(f"Loading ViFiCLIP weight........ - {CLIP_weight}")
         print(msg)
 
     return model

@@ -82,4 +82,4 @@ test_cfg: {
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-ckpt_folder: "./ckpt/AN_agn_50/anet13_vifi_prop_50_tmpl_split{split_id}_0"
+ckpt_folder: "./ckpt/AN_agn_50/anet13_vifi_prop_50_tmpl_split{split_id}_3"

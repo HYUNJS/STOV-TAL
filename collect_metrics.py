@@ -100,29 +100,33 @@ if __name__ == '__main__':
     dataset_opts = ['thumos14', 'anet13']
     model_opts = ['clip', 'vifi']
     split_opts = ['50', '75', 'k400']
-    dataset = 'thumos14'
+    dataset_short_dict = {'anet13': 'AN', 'thumos14': 'TH'}
+    # dataset = 'thumos14'
+    dataset = 'anet13'
 
     # model = 'clip'
     model = 'vifi'
     # load_ema = False
     load_ema = True
 
-    split = '50'
-    # split = '75'
+    # split = '50'
+    split = '75'
     # split = 'k400'
     use_PL = False
 
+    dataset_short = dataset_short_dict[dataset]
     if use_PL:
-        tgt_dir = f'ckpt/TH_agn_PL_{split}'
+        tgt_dir = f'ckpt/{dataset_short}_agn_PL_{split}'
     else:
-        tgt_dir = f'ckpt/TH_agn_{split}'
+        tgt_dir = f'ckpt/{dataset_short}_agn_{split}'
 
     # ckpt_ver = '1'
     # ckpt_ver = '2_ema'
-    ckpt_ver = '0_ema'
+    # ckpt_ver = '0_ema'
+    ckpt_ver = '3'
     # ckpt_ver = '0_ema_th0.05'
-    epoch = 35
-    # epoch = 15
+    # epoch = 35
+    epoch = 15
     topk = 1
 
     tgt_subset = 'validation'
@@ -147,8 +151,9 @@ if __name__ == '__main__':
         df = pd.read_csv(tgt_filepath)
         df['split_id'] = split_id
         df_list.append(df)
-    dfs = pd.concat(df_list)
-    dfs.loc[len(dfs)] = ['avg', *dfs.mean().values.tolist()]
+    dfs = pd.concat(df_list).reset_index(drop=True)
+    dfs_ = dfs.drop(columns='split_name')
+    dfs.loc[len(dfs)] = ['avg', *dfs_.mean().values.tolist()]
     dfs
     # if split == 'k400':
     #     eda_k400()

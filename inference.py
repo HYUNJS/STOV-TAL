@@ -152,7 +152,16 @@ def main(args):
         json.dump(results, fp)
     
     # tiou_thresholds = [0.5]
-    tiou_thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
+    dataset_name = cfg['dataset_name']
+    if dataset_name == 'anet13':
+        tiou_thresholds = [0.5, 0.75, 0.95]
+    elif dataset_name == 'thumos14':
+        tiou_thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
+    elif dataset_name == 'fineaction':
+        tiou_thresholds = [0.5, 0.75, 0.95]
+    else:
+        raise NotImplemented(f"{dataset_name} evaluation is not implemented")
+        
     score_thresh = 0.0
     dataset_name = cfg['dataset_name']
     if cfg['dataset']['class_agnostic']:

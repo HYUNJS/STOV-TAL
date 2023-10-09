@@ -5,12 +5,12 @@
 
 dataset_name: anet13
 train_split: ['training']
-val_split: ['validation']
+val_split: ['training']
 dataset: {
   split_id: -1, # input proper split_id
-  json_file: "./data/anet13/annotations/train_75_test_25/validation_75-{split_id}_tal.json",
+  json_file: "./data/anet13/annotations/train_50_test_50/training_non50-{split_id}_tal.json",
   feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s4F_clip_trainval,
-  class_agnostic: False,
+  class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
   num_classes: 1,
@@ -23,15 +23,6 @@ dataset: {
   # upsample the features to a fixed length of 192
   max_seq_len: 192,
   force_upsampling: True,
-}
-CLIP: {
-  inf_only: True,
-  ## inference details
-  softmax: True,
-#  softmax: False,
-  topk: 1,
-#  topk: 2,
-  nms: True,
 }
 model: {
   fpn_type: identity,
@@ -67,8 +58,6 @@ train_cfg: {
 
 # similar to THUMOS
 test_cfg: {
-#  load_ema: False,
-  nms_method: 'none',
   voting_thresh: 0.9,
   pre_nms_topk: 2000,
   # max of 100 predictions per video
@@ -81,4 +70,4 @@ test_cfg: {
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-ckpt_folder: "./ckpt/AN_agn_75/anet13_clip_prop_75_tmpl_split{split_id}_3"
+ckpt_folder: "./ckpt/AN_agn_50/anet13_clip_prop_50_tmpl_split{split_id}_3"

@@ -154,7 +154,8 @@ def main(args):
     # tiou_thresholds = [0.5]
     dataset_name = cfg['dataset_name']
     if dataset_name == 'anet13':
-        tiou_thresholds = [0.5, 0.75, 0.95]
+        # tiou_thresholds = [0.5, 0.75, 0.95]
+        tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
     elif dataset_name == 'thumos14':
         tiou_thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
     elif dataset_name == 'fineaction':

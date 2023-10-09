@@ -21,16 +21,18 @@ model=$3
 split="non50"
 #split="non75"
 
-devices=(0 0 0 0 0 0 0 0 0 0)
+devices=(0 1 0 1 0 1 0 1 0 1)
 for ((i=0;i<=9;i++))
 do
     echo $i
     split_id="dataset.split_id ${i}"
+    cfg_file="configs/${dataset}_split_inf_${subset}/${dataset}_${model}_prop_${split}_tmpl.yaml"
     D=${devices[i]}
+    echo $cfg_file
     if [ $i -eq 1 ] || [ $i -eq 3 ] || [ $i -eq 7 ] || [ $i -eq 9 ]
     then
-        CUDA_VISIBLE_DEVICES=$D python inference.py configs/${dataset}_split_inf_${subset}/${dataset}_${model}_prop_${split}_tmpl.yaml -e ${epoch} --opts ${split_id}
+        CUDA_VISIBLE_DEVICES=$D python inference.py ${cfg_file} -e ${epoch} --opts ${split_id}
     else
-        CUDA_VISIBLE_DEVICES=$D python inference.py configs/${dataset}_split_inf_${subset}/${dataset}_${model}_prop_${split}_tmpl.yaml -e ${epoch} --opts ${split_id}&
+        CUDA_VISIBLE_DEVICES=$D python inference.py ${cfg_file} -e ${epoch} --opts ${split_id}&
     fi
 done

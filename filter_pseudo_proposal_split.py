@@ -152,11 +152,12 @@ if __name__ == '__main__':
     python filter_pseudo_proposal_split.py  --dataset thumos14 --Esplit non50-0 --Tsplit 50-0 --subset training --model vifi
     '''
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--dataset", default='thumos14')
+    argparser.add_argument("--dataset")
     argparser.add_argument("--Esplit")
     argparser.add_argument("--Tsplit")
     argparser.add_argument("--subset")
     argparser.add_argument("--model")
+    argparser.add_argument("--noema", action='store_true')
     args = argparser.parse_args()
 
     dataset = args.dataset
@@ -164,6 +165,7 @@ if __name__ == '__main__':
     Esplit = args.Esplit
     subset = args.subset
     model = args.model
+    ema_opt = '' if args.noema else '_ema'
     
     assert dataset in ['anet13', 'thumos14']
     assert Tsplit in ['all', 'K400', 'nonK400', *split_50_list, *split_non50_list, *split_75_list, *split_non75_list]
@@ -187,11 +189,17 @@ if __name__ == '__main__':
     thumos14_save_path = f'./ckpt/TH_agn_{split_type}/{th14_ckpt_cfg}/pseudo_labels'
 
     ## anet13 path
-    anet_ver='1'
-    anet_ep='008'
-    anet13_ckpt_cfg = f'anet13_{model}_prop_{Tsplit}_{anet_ver}'
-    anet13_train_prop = f'./ckpt/cls_agnostic_{split_type}/{anet13_ckpt_cfg}/proposal_{subset}_{Esplit}_tal/{anet13_ckpt_cfg}_epoch_{anet_ep}.json'
-    anet13_save_path = f'./ckpt/cls_agnostic_{split_type}/{anet13_ckpt_cfg}/pseudo_labels'
+    # anet_ver='1'
+    # anet_ep='008'
+    # anet13_ckpt_cfg = f'anet13_{model}_prop_{Tsplit}_{anet_ver}'
+    # anet13_train_prop = f'./ckpt/cls_agnostic_{split_type}/{anet13_ckpt_cfg}/proposal_{subset}_{Esplit}_tal/{anet13_ckpt_cfg}_epoch_{anet_ep}.json'
+    # anet13_save_path = f'./ckpt/cls_agnostic_{split_type}/{anet13_ckpt_cfg}/pseudo_labels'
+    anet_ver='3'
+    anet_ep='015'
+    anet13_ckpt_cfg = f'anet13_{model}_prop_{split_type}_tmpl_split{split_id}_{anet_ver}'
+    anet13_train_prop = f'./ckpt/AN_agn_{split_type}/{anet13_ckpt_cfg}/proposal_{subset}_{Esplit}_tal{ema_opt}/{anet13_ckpt_cfg}_epoch_{anet_ep}.json'
+    anet13_save_path = f'./ckpt/AN_agn_{split_type}/{anet13_ckpt_cfg}/pseudo_labels'
+    
     
     ## target path
     save_paths = {'thumos14': thumos14_save_path, 'anet13': anet13_save_path}

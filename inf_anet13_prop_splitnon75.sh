@@ -28,7 +28,8 @@ do
     split_id="dataset.split_id ${i}"
     cfg_file="configs/${dataset}_split_inf_${subset}/${dataset}_${model}_prop_${split}_tmpl.yaml"
     D=${devices[i]}
-    if [ $i -eq 1 ] || [ $i -eq 3 ] || [ $i -eq 7 ] || [ $i -eq 9 ]
+    echo $cfg_file
+    if [ $i -eq 1 ] || [ $i -eq 3 ] || [ $i -eq 5 ] || [ $i -eq 7 ] || [ $i -eq 9 ]
     then
         CUDA_VISIBLE_DEVICES=$D python inference.py ${cfg_file} -e ${epoch} --opts ${split_id}
     else

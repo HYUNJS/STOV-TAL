@@ -85,3 +85,4 @@ test_cfg: {
   duration_thresh: 0.001,
 }
 output_folder: ./ckpt/AN_cls_all
+ckpt_folder: ./ckpt/AN_cls_all/anet13_clip_all_ver2

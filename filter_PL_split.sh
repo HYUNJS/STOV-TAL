@@ -2,7 +2,7 @@
 
 # dataset="anet13"
 # dataset="thumos14"
-dataset = $1
+dataset=$1
 
 # model="clip"
 # model="vifi"

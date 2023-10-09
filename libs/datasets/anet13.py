@@ -44,7 +44,9 @@ class ActivityNetDataset(Dataset):
         print(f'split: {split} | filepath: {json_file}')
         
         # file path
-        assert os.path.exists(feat_folder) and os.path.exists(json_file)
+        feat_exist = os.path.exists(feat_folder)
+        json_exist = os.path.exists(json_file)
+        assert feat_exist and json_exist, f"Feat: {feat_exist} | json: {json_exist}"
         assert isinstance(split, tuple) or isinstance(split, list)
         assert crop_ratio == None or len(crop_ratio) == 2
         self.feat_folder = feat_folder

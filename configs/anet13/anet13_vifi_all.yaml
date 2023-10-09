@@ -1,0 +1,87 @@
+# This is an updated config for using I3D on ActivtyNet, resulting in slightly
+# better performance. To reproduce the setting in our paper, set
+# max_seq_len: 160,
+# n_mha_win_size: [11, 11, 11, 11, -1, -1],
+
+dataset_name: anet13
+train_split: ['training']
+val_split: ['validation']
+dataset: {
+  train_json_file: ./data/anet13/annotations/training_tal.json,
+  val_json_file: ./data/anet13/annotations/validation_tal.json,
+  feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s4F_ep10_trainval,
+  file_prefix: ~,
+  file_ext: .npy,
+  num_classes: 200,
+  input_dim: 512,
+  feat_stride: 4,
+  num_frames: 16,
+  default_fps: 30,
+  trunc_thresh: 0.5,
+  crop_ratio: [0.9, 1.0],
+  # upsample the features to a fixed length of 192
+  max_seq_len: 192,
+  # max_seq_len: 576,
+  force_upsampling: True,
+}
+model: {
+  fpn_type: identity,
+  max_buffer_len_factor: 1.0,
+  # 192 - 96 - 48 - 24 - 12 - 6
+  n_mha_win_size: [7, 7, 7, 7, 7, -1],
+  # n_mha_win_size: 19
+  # n_head: 4,
+  # embd_dim: 256,
+  # fpn_dim: 256,
+  # head_dim: 256,
+  # use_abs_pe: True,
+}
+opt: {
+  # ## ver0
+  # learning_rate: 0.001,
+  # epochs: 10,
+  # ## ver1
+  # learning_rate: 0.001,
+  # epochs: 5, # ver1
+  ## ver2
+  learning_rate: 0.0001,
+  epochs: 10,
+  # ## ver3
+  # learning_rate: 0.00001,
+  # epochs: 10,
+
+  weight_decay: 0.05,
+  warmup_epochs: 5,
+  # eta_min: 0.0001 # 1e-8
+}
+loader: {
+  batch_size: 16,
+  num_workers: 4,
+}
+train_cfg: {
+  init_loss_norm: 200,
+  clip_grad_l2norm: 1.0,
+  cls_prior_prob: 0.01,
+  center_sample: radius,
+  center_sample_radius: 1.5,
+  label_smoothing: 0.1,
+  droppath: 0.1,
+  loss_weight: 2.0,
+  run_val: True,
+}
+
+# similar to THUMOS
+test_cfg: {
+  voting_thresh: 0.9,
+  pre_nms_topk: 2000,
+  # max of 100 predictions per video
+  max_seg_num: 100,
+  min_score: 0.001,
+  # score fusion
+  # multiclass_nms: False,
+  multiclass_nms: True,
+  nms_sigma : 0.75,
+  # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
+  duration_thresh: 0.001,
+}
+output_folder: ./ckpt/AN_cls_all

@@ -18,6 +18,7 @@ DEFAULTS = {
         'train_json_file': '',
         'label_filepaths': {
             'thumos14': {
+                'PL': './data/thumos14/annotations/thumos14_labels.csv',
                 'all': './data/thumos14/annotations/thumos14_labels.csv',
                 'K400': './data/thumos14/annotations/thumos14_K400_overlap_labels.csv',
                 'nonK400': './data/thumos14/annotations/thumos14_K400_nonoverlap_labels.csv',
@@ -27,11 +28,13 @@ DEFAULTS = {
                 **{f"non75-{i}": f"./data/thumos14/annotations/train_75_test_25/thumos14_75-{i}_nonoverlap_labels.csv" for i in range(10)},
             },
             'fineaction': {
+                'PL': './data/fineaction/annotations/fineaction_labels.csv',
                 'all': './data/fineaction/annotations/fineaction_labels.csv',
                 'K400': './data/fineaction/annotations/fineaction_K400_overlap_labels.csv',
                 'nonK400': './data/fineaction/annotations/fineaction_K400_nonoverlap_labels.csv',
             },
             'anet13': {
+                'PL': './data/anet13/annotations/anet13_labels.csv',
                 'all': './data/anet13/annotations/anet13_labels.csv',
                 'K400': './data/anet13/annotations/anet13_K400_overlap_labels.csv',
                 'nonK400': './data/anet13/annotations/anet13_K400_nonoverlap_labels.csv',

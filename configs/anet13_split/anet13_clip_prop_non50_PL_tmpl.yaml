@@ -8,8 +8,8 @@ train_split: ['training']
 val_split: ['validation']
 dataset: {
   split_id: -1, # input proper split_id
-  train_json_file: "./data/anet13/pseudo_annos_non50_all/T-50-{split_id}_E-non50-{split_id}_th-0.05_CLS_ep10.json",
-  feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s16F_ep10_trainval,
+  train_json_file: "./data/anet13/PL_non50_clip/T-50-{split_id}_E-non50-{split_id}_th-0.05.json",
+  feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s4F_clip_trainval,
   val_file_dir: './data/anet13/annotations/train_50_test_50',
   val_file_list: ["validation_50-{split_id}_tal.json", "validation_non50-{split_id}_tal.json"],
   class_agnostic: True,
@@ -17,7 +17,7 @@ dataset: {
   file_ext: .npy,
   num_classes: 1,
   input_dim: 512,
-  feat_stride: 16,
+  feat_stride: 4,
   num_frames: 16,
   default_fps: 30,
   trunc_thresh: 0.5,
@@ -38,8 +38,9 @@ model: {
   # use_abs_pe: True,
 }
 opt: {
-  learning_rate: 0.001,
-  epochs: 5,
+  ## ver3
+  learning_rate: 0.00001,
+  epochs: 10,
   weight_decay: 0.05,
 }
 loader: {

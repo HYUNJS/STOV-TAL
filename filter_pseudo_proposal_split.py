@@ -143,7 +143,6 @@ def merge_agn_annos():
             merged_annos[vid]['annotations'] = pl_annos[vid]
 
         merged_anno_filename = pl_filename.replace(f"{subset}_", "")
-        pseudo_dirpath = f'./data/{dataset}/pseudo_annos_non{split_type}_all'
         with open(osp.join(pseudo_dirpath, merged_anno_filename), 'w') as fp:
             json.dump({'database': merged_annos}, fp)
 
@@ -166,7 +165,7 @@ if __name__ == '__main__':
     subset = args.subset
     model = args.model
     ema_opt = '' if args.noema else '_ema'
-    
+    print(f"T {Tsplit} | E {Esplit} | dataset {dataset} | subset {subset} | model {model}")
     assert dataset in ['anet13', 'thumos14']
     assert Tsplit in ['all', 'K400', 'nonK400', *split_50_list, *split_non50_list, *split_75_list, *split_non75_list]
     assert Esplit in ['all', 'K400', 'nonK400', *split_50_list, *split_non50_list, *split_75_list, *split_non75_list]
@@ -222,4 +221,6 @@ if __name__ == '__main__':
     print(num_gt)
 
     ## merge into agnostic anno
+    pseudo_dirpath = f'./data/{dataset}/PL_non{split_type}_{model}'
+    os.makedirs(pseudo_dirpath, exist_ok=True)
     merge_agn_annos()

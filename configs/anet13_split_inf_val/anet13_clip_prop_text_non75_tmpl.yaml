@@ -81,4 +81,5 @@ test_cfg: {
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-ckpt_folder: "./ckpt/AN_agn_75/anet13_clip_prop_75_tmpl_split{split_id}_3"
+# ckpt_folder: "./ckpt/AN_agn_75/anet13_clip_prop_75_tmpl_split{split_id}_3"
+ckpt_folder: "./ckpt/AN_agn_PL_75/anet13_clip_prop_non75_PL_tmpl_split{split_id}_th0.05_3"

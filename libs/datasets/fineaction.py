@@ -1,12 +1,12 @@
 import os, sys, json, torch, pickle
 
 import numpy as np
+import pandas as pd
 from torch.utils.data import Dataset
 from torch.nn import functional as F
 
 from .datasets import register_dataset
-from .data_utils import truncate_feats
-
+from .data_utils import truncate_feats, parse_split_name
 
 
 @register_dataset("fineaction")
@@ -39,8 +39,12 @@ class FineActionDataset(Dataset):
         if json_file == '':
             json_file = train_json_file if 'training' in split else val_json_file
         print(f'split: {split} | filepath: {json_file}')
+        self.dataset_name = 'fineaction'
+        
         # file path
-        assert os.path.exists(feat_folder) and os.path.exists(json_file)
+        feat_exist = os.path.exists(feat_folder)
+        json_exist = os.path.exists(json_file)
+        assert feat_exist and json_exist, f"Feat: {feat_exist} | json: {json_exist}"
         assert isinstance(split, tuple) or isinstance(split, list)
         assert crop_ratio == None or len(crop_ratio) == 2
         self.feat_folder = feat_folder
@@ -54,6 +58,13 @@ class FineActionDataset(Dataset):
         # split / training mode
         self.split = split
         self.is_training = is_training
+        
+        ## cls-split
+        subset_split_name = parse_split_name(json_file, None)
+        self.split_name = subset_split_name.replace('val_', '').replace('train_', '')
+        label_filepath = kwargs['label_filepaths'][self.dataset_name][self.split_name]
+        self.label_df = pd.read_csv(label_filepath)
+        self.cls_name_list = self.label_df['name'].tolist()
 
         # features meta info
         self.feat_stride = feat_stride
@@ -78,7 +89,7 @@ class FineActionDataset(Dataset):
 
         # dataset specific attributes
         self.db_attributes = {
-            'dataset_name': 'fineaction',
+            'dataset_name': self.dataset_name,
             'tiou_thresholds': tiou_thresholds,
             # we will mask out cliff diving
             'empty_label_ids': [],

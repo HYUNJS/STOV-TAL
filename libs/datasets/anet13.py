@@ -42,6 +42,7 @@ class ActivityNetDataset(Dataset):
         if json_file == '':
             json_file = train_json_file if 'training' in split else val_json_file
         print(f'split: {split} | filepath: {json_file}')
+        self.dataset_name = 'anet13'
         
         # file path
         feat_exist = os.path.exists(feat_folder)
@@ -67,7 +68,7 @@ class ActivityNetDataset(Dataset):
         ## cls-split
         subset_split_name = parse_split_name(json_file, None)
         self.split_name = subset_split_name.replace('val_', '').replace('train_', '')
-        label_filepath = kwargs['label_filepaths']['anet13'][self.split_name]
+        label_filepath = kwargs['label_filepaths'][self.dataset_name][self.split_name]
         self.label_df = pd.read_csv(label_filepath)
         self.cls_name_list = self.label_df['name'].tolist()
 
@@ -96,7 +97,7 @@ class ActivityNetDataset(Dataset):
 
         # dataset specific attributes
         self.db_attributes = {
-            'dataset_name': 'anet13',
+            'dataset_name': self.dataset_name,
             'tiou_thresholds': tiou_thresholds,
             # 'tiou_thresholds': np.linspace(0.5, 0.95, 10),
             'empty_label_ids': []

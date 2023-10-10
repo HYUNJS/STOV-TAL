@@ -1,13 +1,13 @@
-dataset_name: fineaction
+dataset_name: thumos14
 train_split: ['training']
 val_split: ['validation']
 dataset: {
-  train_json_file: ./data/fineaction/annotations/training_tal.json,
-  val_json_file: ./data/fineaction/annotations/validation_tal.json,
-  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_clip_trainval,
+  train_json_file: ./data/thumos14/annotations/training_tal.json,
+  val_json_file: ./data/thumos14/annotations/validation_tal.json,
+  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   file_prefix: ~,
   file_ext: .npy,
-  num_classes: 106,
+  num_classes: 20,
   input_dim: 512,
   feat_stride: 4,
   num_frames: 16,
@@ -19,27 +19,16 @@ dataset: {
 }
 model: {
   fpn_type: identity,
-  max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
+  max_buffer_len_factor: 6.0,
   n_mha_win_size: 19,
 }
 opt: {
-  # ## ver0
-  # learning_rate: 0.0001,
-  # epochs: 5,
-  # weight_decay: 0.05,
-  # warmup_epochs: 5,
-  ## ver1
   learning_rate: 0.0001,
-  epochs: 10,
+  epochs: 30,
   weight_decay: 0.05,
-  warmup_epochs: 5,
-  # eta_min: 0.0001 # 1e-8
 }
 loader: {
-  # ## ver0
-  # batch_size: 4,
-  ## ver1
-  batch_size: 8,
+  batch_size: 2,
   num_workers: 4,
 }
 train_cfg: {
@@ -48,7 +37,6 @@ train_cfg: {
   cls_prior_prob: 0.01,
   center_sample: radius,
   center_sample_radius: 1.5,
-  run_val: True
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -61,6 +49,5 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: True,
 }
-output_folder: ./ckpt/FA_cls_all
-ckpt_folder: ./ckpt/FA_cls_all/fineaction_clip_all_1
-  
+output_folder: ./ckpt/TH_cls_all
+ckpt_folder: ./ckpt/TH_cls_all/thumos14_vifi_all_0

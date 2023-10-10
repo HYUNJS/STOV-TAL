@@ -41,9 +41,12 @@ class THUMOS14Dataset(Dataset):
         if json_file == '':
             json_file = val_json_file if 'validation' in split else train_json_file
         print(f'split: {split} | filepath: {json_file}')
+        self.dataset_name = 'thumos14'
 
         # file path
-        assert os.path.exists(feat_folder) and os.path.exists(json_file)
+        feat_exist = os.path.exists(feat_folder)
+        json_exist = os.path.exists(json_file)
+        assert feat_exist and json_exist, f"Feat: {feat_exist} | json: {json_exist}"
         assert isinstance(split, tuple) or isinstance(split, list)
         assert crop_ratio == None or len(crop_ratio) == 2
         self.feat_folder = feat_folder
@@ -61,7 +64,7 @@ class THUMOS14Dataset(Dataset):
         ## cls-split
         subset_split_name = parse_split_name(json_file, None)
         self.split_name = subset_split_name.replace('val_', '').replace('train_', '')
-        label_filepath = kwargs['label_filepaths']['thumos14'][self.split_name]
+        label_filepath = kwargs['label_filepaths'][self.dataset_name][self.split_name]
         self.label_df = pd.read_csv(label_filepath)
         self.cls_name_list = self.label_df['name'].tolist()
 
@@ -80,7 +83,7 @@ class THUMOS14Dataset(Dataset):
         self.tiou_thresholds = tiou_thresholds
 
         # load vinfo
-        vinfo = pd.read_csv(osp.join(root_dir, 'thumos14/vinfo.csv'))
+        vinfo = pd.read_csv(osp.join(root_dir, f'{self.dataset_name}/vinfo.csv'))
         self.use_i3d = 'i3d' in feat_folder
         if self.use_i3d:
             self.vid2fps_dict = {}
@@ -97,7 +100,7 @@ class THUMOS14Dataset(Dataset):
 
         # dataset specific attributes
         self.db_attributes = {
-            'dataset_name': 'thumos14',
+            'dataset_name': self.dataset_name,
             'tiou_thresholds': tiou_thresholds,
             # we will mask out cliff diving
             'empty_label_ids': [],

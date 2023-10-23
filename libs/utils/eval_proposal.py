@@ -164,7 +164,7 @@ class ANETdetection(object):
 
         # remove labels that does not exists in gt
         self.activity_index = {j: i for i, j in enumerate(sorted(self.ground_truth['label'].unique()))}
-        self.ground_truth['label']=self.ground_truth['label'].replace(self.activity_index)
+        self.ground_truth['label'] = self.ground_truth['label'].replace(self.activity_index)
 
     def _get_act_id2name(self, label_filepath):
         if label_filepath is None:
@@ -312,6 +312,11 @@ class ANETdetection(object):
                 'label': preds['label'].tolist(),
                 'score': preds['score'].tolist()
             })
+        ## remap prediction label_id following self.activity_index
+        gt_cls_list = list(self.activity_index.keys())
+        pred_cls_in_gt_mask = preds['label'].apply(lambda x: x in gt_cls_list)
+        preds = preds[pred_cls_in_gt_mask].reset_index(drop=True)
+        preds['label'] = preds['label'].replace(self.activity_index)
 
         ap, recallx, recall = self.eval_cls_specific(preds)
         if tgt_cls_arr is not None:
@@ -355,6 +360,12 @@ class ANETdetection(object):
                 'label': preds['label'].tolist(),
                 'score': preds['score'].tolist()
             })
+        ## remap prediction label_id following self.activity_index
+        gt_cls_list = list(self.activity_index.keys())
+        pred_cls_in_gt_mask = preds['label'].apply(lambda x: x in gt_cls_list)
+        preds = preds[pred_cls_in_gt_mask].reset_index(drop=True)
+        preds['label'] = preds['label'].replace(self.activity_index)
+
         # always reset ap
         self.ap = None
 
@@ -386,6 +397,7 @@ class ANETdetection(object):
             num_pred_per_cls = preds[['video-id', 'label']].groupby('label').count()['video-id']
             num_gt_per_cls = self.ground_truth.groupby('label').count()['video-id']
             if self.act_id2name is not None:
+                raise Exception("This version is not handling label_id shift due to self.activity_index")
                 ## class-wise results
                 for idx, tiou in enumerate(self.tiou_thresholds):
                     print('\n[tIoU = {:.2f}] - Class-wise Accuracy'.format(tiou))

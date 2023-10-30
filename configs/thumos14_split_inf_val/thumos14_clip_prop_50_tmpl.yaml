@@ -3,7 +3,6 @@ train_split: ['training']
 val_split: ['validation']
 dataset: {
   split_id: -1, # input proper split_id
-#  json_file: "./data/thumos14/annotations/train_50_test_50/validation_non50-{split_id}_tal.json",
    json_file: "./data/thumos14/annotations/train_50_test_50/validation_50-{split_id}_tal.json",
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_clip_trainval,
   class_agnostic: True,
@@ -55,5 +54,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 # ckpt_folder: ./ckpt/path_to_ckpt
-#ckpt_folder: "./ckpt/TH_agn_50/thumos14_clip_prop_50_tmpl_split{split_id}_1"
-ckpt_folder: "./ckpt/TH_agn_50/thumos14_clip_prop_50_tmpl_split{split_id}_2_ema"
+ckpt_folder: "./ckpt/TH_agn_50/thumos14_clip_prop_50_tmpl_split{split_id}_0_ema"

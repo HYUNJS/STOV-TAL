@@ -2,11 +2,14 @@ dataset_name: thumos14
 train_split: ['training']
 val_split: ['validation']
 dataset: {
-  split_id: -1, # input proper split_id
-  train_json_file: "./data/thumos14/annotations/train_50_test_50/training_50-{split_id}_tal.json",
+#  train_json_file: "./data/thumos14/annotations/training_K400_tal.json",
+#  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_th-0.05.json", # variable
+  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_th-0.05_duplicate-0.5.json", # variable
+#  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_top-5.json", # variable
+#  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_top-5_duplicate-0.5.json", # variable
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
-  val_file_dir: './data/thumos14/annotations/train_50_test_50',
-  val_file_list: ['validation_50-{split_id}_tal.json', 'validation_non50-{split_id}_tal.json'],
+  val_file_dir: './data/thumos14/annotations',
+  val_file_list: [ 'validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
   class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
@@ -26,11 +29,17 @@ model: {
   n_mha_win_size: 19,
 }
 opt: {
-  learning_rate: 0.0001,
+#  learning_rate: 0.0001,
   # eta_min: 0.0001, # 1e-8
   # epochs: 5,
-   epochs: 30, # ver0
+#  epochs: 30, # ver0
 #  epochs: 10, # ver1
+
+  ## ver2
+  learning_rate: 0.00001,
+  eta_min: 0.00001, # 1e-8
+  epochs: 10,
+
   warmup_epochs: 5,
   weight_decay: 0.05,
 }
@@ -57,4 +66,4 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: False,
 }
-output_folder: ./ckpt/TH_agn_50
+output_folder: ./ckpt/TH_agn_PL_K400

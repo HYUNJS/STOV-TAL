@@ -69,3 +69,4 @@ test_cfg: {
 # ckpt_folder: ./ckpt/path_to_ckpt
 ckpt_folder: "./ckpt/TH_agn_50/thumos14_vifi_prop_50_tmpl_split{split_id}_0_ema"
 #ckpt_folder: "./ckpt/TH_agn_50/thumos14_vifi_prop_50_tmpl_split{split_id}_1_ema"
+#ckpt_folder: "./ckpt/TH_agn_PL_50/thumos14_vifi_prop_50_pseudo_tmpl_split{split_id}_0_ema_th0.05"

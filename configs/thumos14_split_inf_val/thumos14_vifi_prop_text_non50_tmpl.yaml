@@ -68,6 +68,7 @@ test_cfg: {
   multiclass_nms: False,
 }
 # ckpt_folder: ./ckpt/path_to_ckpt
-ckpt_folder: "./ckpt/TH_agn_50/thumos14_vifi_prop_50_tmpl_split{split_id}_0_ema"
+#ckpt_folder: "./ckpt/TH_agn_50/thumos14_vifi_prop_50_tmpl_split{split_id}_0_ema"
 #ckpt_folder: "./ckpt/TH_agn_50/thumos14_vifi_prop_50_tmpl_split{split_id}_1"
 #ckpt_folder: "./ckpt/TH_agn_PL_50/thumos14_vifi_prop_50_pseudo_tmpl_split{split_id}_0_ema_th0.05"
+ckpt_folder: "./ckpt/TH_agn_PL_50/thumos14_vifi_prop_non50_PL_tmpl_split{split_id}_th0.05_1_load_as_ema/"

@@ -23,15 +23,24 @@ model: {
   n_mha_win_size: 19,
 }
 opt: {
+  # ## ver0
+  # learning_rate: 0.0001,
+  # epochs: 5,
+  # weight_decay: 0.05,
+  # warmup_epochs: 5,
+  ## ver1
   learning_rate: 0.0001,
-  epochs: 3,
+  epochs: 10,
   weight_decay: 0.05,
   warmup_epochs: 5,
-  eta_min: 0.0001 # 1e-8
+  # eta_min: 0.0001 # 1e-8
 }
 loader: {
-  batch_size: 2,
-  num_workers: 8,
+  # ## ver0
+  # batch_size: 4,
+  ## ver1
+  batch_size: 8,
+  num_workers: 4,
 }
 train_cfg: {
   init_loss_norm: 100,
@@ -52,4 +61,6 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: True,
 }
-output_folder: ./ckpt/cls_aware
+output_folder: ./ckpt/FA_cls_all
+ckpt_folder: ./ckpt/FA_cls_all/fineaction_clip_all_1
+  

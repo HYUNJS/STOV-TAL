@@ -36,8 +36,7 @@ opt: {
 }
 loader: {
   batch_size: 2,
-#  num_workers: 4,
-  num_workers: 2,
+  num_workers: 4,
 }
 train_cfg: {
   init_loss_norm: 100,

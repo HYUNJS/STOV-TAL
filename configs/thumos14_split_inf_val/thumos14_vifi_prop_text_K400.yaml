@@ -3,11 +3,10 @@ train_split: ['training']
 val_split: ['validation']
 dataset: {
   split_id: -1, # input proper split_id
-  train_json_file: "./data/thumos14/annotations/train_50_test_50/training_50-{split_id}_tal.json",
+  json_file: "./data/thumos14/annotations/validation_K400_tal.json",
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
-  val_file_dir: './data/thumos14/annotations/train_50_test_50',
-  val_file_list: ['validation_50-{split_id}_tal.json', 'validation_non50-{split_id}_tal.json'],
-  class_agnostic: True,
+#  class_agnostic: True,
+  class_agnostic: False,
   file_prefix: ~,
   file_ext: .npy,
   num_classes: 1,
@@ -20,6 +19,17 @@ dataset: {
   max_seq_len: 2304,
   default_fps: 30,
 }
+CLIP: {
+  inf_only: True,
+  weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
+  ## inference details
+  softmax: True,
+#  softmax: False,
+  topk: 1,
+#  topk: 2,
+#  nms: False,
+  nms: True,
+}
 model: {
   fpn_type: identity,
   max_buffer_len_factor: 6.0,
@@ -28,9 +38,7 @@ model: {
 opt: {
   learning_rate: 0.0001,
   # eta_min: 0.0001, # 1e-8
-  # epochs: 5,
-   epochs: 30, # ver0
-#  epochs: 10, # ver1
+  epochs: 30,
   warmup_epochs: 5,
   weight_decay: 0.05,
 }
@@ -47,6 +55,8 @@ train_cfg: {
   run_val: True,
 }
 test_cfg: {
+#  load_ema: False,
+  nms_method: 'none',
   voting_thresh: 0.7,
   pre_nms_topk: 2000,
   max_seg_num: 200,
@@ -57,4 +67,14 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: False,
 }
-output_folder: ./ckpt/TH_agn_50
+# ckpt_folder: ./ckpt/path_to_ckpt
+#ckpt_folder: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0"
+#ckpt_folder: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0_ema"
+#ckpt_folder: "./ckpt/TH_agn_all/thumos14_vifi_prop_all_0"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_0"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_as_ema/"
+ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_ema_as_ema/"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_ema_as_all/"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_dup-0.50_load_ema_as_ema/"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_dup-0.50_load_all/"
+

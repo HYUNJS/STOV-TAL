@@ -43,7 +43,8 @@ class ActivityNetDataset(Dataset):
             json_file = train_json_file if 'training' in split else val_json_file
         print(f'split: {split} | filepath: {json_file}')
         self.dataset_name = 'anet13'
-        
+        self.dataset_shortname = 'AN'
+
         # file path
         feat_exist = os.path.exists(feat_folder)
         json_exist = os.path.exists(json_file)

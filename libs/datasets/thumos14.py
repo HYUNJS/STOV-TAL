@@ -42,6 +42,7 @@ class THUMOS14Dataset(Dataset):
             json_file = val_json_file if 'validation' in split else train_json_file
         print(f'split: {split} | filepath: {json_file}')
         self.dataset_name = 'thumos14'
+        self.dataset_shortname = 'TH'
 
         # file path
         feat_exist = os.path.exists(feat_folder)

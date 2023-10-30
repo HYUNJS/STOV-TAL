@@ -38,7 +38,7 @@ def main(args):
         ckpt_file = args.ckpt
     else: # ckpt in format of directory
         ckpt_folder = cfg['ckpt_folder'] if args.ckpt == '' else args.ckpt
-        assert os.path.isdir(ckpt_folder), "CKPT file folder does not exist!"
+        assert os.path.isdir(ckpt_folder), f"CKPT file folder does not exist! - {ckpt_folder}"
         if args.epoch > 0:
             ckpt_file = os.path.join(
                 ckpt_folder, 'epoch_{:03d}.pth.tar'.format(args.epoch)
@@ -97,9 +97,49 @@ def main(args):
     msg = model.load_state_dict(load_state_dict, strict=False)
     print(msg)
     del checkpoint
+    CLIP_inf_only = cfg['CLIP']['inf_only']
+
+    ##### set dirpath for saving output and metric
+    output_dirpath = args.out_dir
+    model_cfg = ckpt_file.split('/')[-2]
+    ckpt_cfg = ckpt_file.split('/')[-1].replace('.pth', '').replace('.tar', '')
+    proposal_filename = f'{model_cfg}_{ckpt_cfg}.json'
+    tgt_eval_file = os.path.split(val_dataset.json_file)[-1].replace('.json', '')
+    tgt_eval_file = f"{val_dataset.dataset_shortname}_{tgt_eval_file}"
+    if output_dirpath == '':
+        output_dirpath = os.path.split(ckpt_file)[0]
+
+    if CLIP_inf_only:
+        clip_topk = cfg['CLIP']['topk']
+        clip_cos = not cfg['CLIP']['softmax']
+        if clip_topk > 1:
+            proposal_dirname = f'proposal_CLIP_clsK{clip_topk}'
+            metric_dirname = f'metric_CLIP_clsK{clip_topk}'
+        else:
+            proposal_dirname = f'proposal_CLIP_cls'
+            metric_dirname = f'metric_CLIP_cls'
+        if clip_cos:
+            proposal_dirname += '_cos'
+            metric_dirname += '_cos'
+        proposal_dirname += f"_{tgt_eval_file}"
+        metric_dirname += f"_{tgt_eval_file}"
+    elif cfg['dataset']['class_agnostic']:
+        proposal_dirname = f'proposal_{tgt_eval_file}'
+        metric_dirname = f'metric_{tgt_eval_file}'
+    else:
+        proposal_dirname = f'proposal_cls_{tgt_eval_file}'
+        metric_dirname = f'metric_cls_{tgt_eval_file}'
+
+    if load_ema:
+        proposal_dirname += '_ema'
+        metric_dirname += '_ema'
+
+    proposal_filepath = os.path.join(output_dirpath, proposal_dirname, proposal_filename)
+    metric_filepath = os.path.join(output_dirpath, metric_dirname, proposal_filename.replace('.json', '.csv'))
+    os.makedirs(os.path.dirname(proposal_filepath), exist_ok=True)
+    os.makedirs(os.path.dirname(metric_filepath), exist_ok=True)
 
     """5. Test the model"""
-    CLIP_inf_only = cfg['CLIP']['inf_only']
     print("\nStart testing model {:s} ...".format(cfg['model_name']))
     start = time.time()
     results = valid_one_epoch(
@@ -117,37 +157,6 @@ def main(args):
     )
     
     """6. evaluate proposal recall"""
-    output_dirpath = args.out_dir
-    model_cfg = ckpt_file.split('/')[-2]
-    ckpt_cfg = ckpt_file.split('/')[-1].replace('.pth', '').replace('.tar', '')
-    proposal_filename = f'{model_cfg}_{ckpt_cfg}.json'
-    tgt_eval_file = os.path.split(val_dataset.json_file)[-1].replace('.json', '')
-    if output_dirpath == '':
-        output_dirpath = os.path.split(ckpt_file)[0]
-
-    if CLIP_inf_only:
-        clip_topk = cfg['CLIP']['topk']
-        if clip_topk > 1:
-            proposal_dirname = f'proposal_CLIP_clsK{clip_topk}_{tgt_eval_file}'
-            metric_dirname = f'metric_CLIP_clsK{clip_topk}_{tgt_eval_file}'
-        else:
-            proposal_dirname = f'proposal_CLIP_cls_{tgt_eval_file}'
-            metric_dirname = f'metric_CLIP_cls_{tgt_eval_file}'
-    elif cfg['dataset']['class_agnostic']:
-        proposal_dirname = f'proposal_{tgt_eval_file}'
-        metric_dirname = f'metric_{tgt_eval_file}'
-    else:
-        proposal_dirname = f'proposal_cls_{tgt_eval_file}'
-        metric_dirname = f'metric_cls_{tgt_eval_file}'
-
-    if load_ema:
-        proposal_dirname += '_ema'
-        metric_dirname += '_ema'
-
-    proposal_filepath = os.path.join(output_dirpath, proposal_dirname, proposal_filename)
-    metric_filepath = os.path.join(output_dirpath, metric_dirname, proposal_filename.replace('.json', '.csv'))
-    os.makedirs(os.path.dirname(proposal_filepath), exist_ok=True)
-    os.makedirs(os.path.dirname(metric_filepath), exist_ok=True)
     with open(proposal_filepath, 'w') as fp:
         json.dump(results, fp)
     
@@ -170,7 +179,9 @@ def main(args):
         _, _, results_dict = run_mRec_eval(val_dataset.json_file, proposal_filepath, tiou_thresholds, score_thresh,
                                            dataset_name, num_workers=cfg['loader']['num_workers'], split=cfg['val_split'][0])
 
-        pd.DataFrame(results_dict, index=[0]).to_csv(metric_filepath, index=False)
+        df = pd.DataFrame(results_dict, index=[0])
+        df.insert(0, 'split_name', val_dataset.split_name)
+        df.to_csv(metric_filepath, index=False)
 
         R1x, R5x = results_dict['R@1x'], results_dict['R@5x']
         R100, R300, R1000 = results_dict['R@100'], results_dict['R@300'], results_dict['R@1000']

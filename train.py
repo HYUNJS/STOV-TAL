@@ -142,6 +142,15 @@ def main(args):
             print("=> no checkpoint found at '{}'".format(args.resume))
             return
 
+    # tgt_ckpt = './ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0/epoch_035.pth.tar'
+    # checkpoint = torch.load(tgt_ckpt, map_location=lambda storage, loc: storage.cuda(cfg['devices'][0]))
+    # # model_ema.module.load_state_dict(checkpoint['state_dict'])
+    # model.load_state_dict(checkpoint['state_dict_ema'])
+    # model_ema.module.load_state_dict(checkpoint['state_dict_ema'])
+    # # model.load_state_dict(checkpoint['state_dict'])
+    # # model_ema.module.load_state_dict(checkpoint['state_dict_ema'])
+    # del checkpoint
+
     # save the current config
     with open(os.path.join(ckpt_folder, 'config.txt'), 'w') as fid:
         pprint(cfg, stream=fid)

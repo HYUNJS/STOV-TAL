@@ -165,6 +165,7 @@ class ANETdetection(object):
         # remove labels that does not exists in gt
         self.activity_index = {j: i for i, j in enumerate(sorted(self.ground_truth['label'].unique()))}
         self.ground_truth['label'] = self.ground_truth['label'].replace(self.activity_index)
+        print(f"{dataset_name} - {ant_file} has #CLS {len(self.activity_index)}")
 
     def _get_act_id2name(self, label_filepath):
         if label_filepath is None:
@@ -320,9 +321,9 @@ class ANETdetection(object):
 
         ap, recallx, recall = self.eval_cls_specific(preds)
         if tgt_cls_arr is not None:
-            self.ap = self.ap[..., tgt_cls_arr]
-            self.recallx = self.recallx[..., tgt_cls_arr]
-            self.recall = self.recall[..., tgt_cls_arr]
+            self.ap = ap[..., tgt_cls_arr]
+            self.recallx = recallx[..., tgt_cls_arr]
+            self.recall = recall[..., tgt_cls_arr]
         else:
             self.ap, self.recallx, self.recall = ap, recallx, recall
         mAP = self.ap.mean(axis=1) * 100
@@ -749,7 +750,7 @@ def run_mRec_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, 
     else:
         return prop_Rxs, prop_Rs, results_dict
 
-def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, num_workers=8, split='validation', verbose=True, get_csv=False):
+def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, num_workers=8, split='validation', tgt_cls_arr=None, verbose=True, get_csv=False):
     print(f'Evaluate split - {split}')
     evaluator = ANETdetection(
         gt_filepath,
@@ -770,7 +771,7 @@ def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, n
     print(f"Threshold {thresh}")
     pred_tgt = pred_df[pred_df['score'] >= thresh]
 
-    mAPs, mRxs, mRs = evaluator.evaluate_mAP(pred_tgt)
+    mAPs, mRxs, mRs = evaluator.evaluate_mAP(pred_tgt, tgt_cls_arr=tgt_cls_arr)
     print(mAPs)
     # mAP = mAPs[0]
     # print(mAP)

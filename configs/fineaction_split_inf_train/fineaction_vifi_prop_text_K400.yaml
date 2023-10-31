@@ -1,13 +1,11 @@
 dataset_name: fineaction
 train_split: ['training']
-val_split: ['validation']
+val_split: ['training']
 dataset: {
-  train_json_file: ./data/fineaction/annotations/training_K400_tal.json,
-  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_clip_trainval,
-  val_file_dir: './data/fineaction/annotations/',
-  # val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
-  val_file_list: ['validation_K400_tal.json', 'validation_nonK400_tal.json'],
-  class_agnostic: True,
+  json_file: ./data/fineaction/annotations/training_K400_tal.json,
+  # json_file: ./data/fineaction/annotations/training_nonK400_tal.json,
+  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
+  class_agnostic: False,
   file_prefix: ~,
   file_ext: .npy,
   num_classes: 1,
@@ -20,30 +18,28 @@ dataset: {
   max_seq_len: 2304,
   default_fps: 30,
 }
+CLIP: {
+  inf_only: True,
+  weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
+  ## inference details
+  softmax: True,
+#  softmax: False,
+  topk: 1,
+#  topk: 2,
+#  nms: False,
+  nms: True,
+}
 model: {
   fpn_type: identity,
   max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
   n_mha_win_size: 19,
 }
-opt: {
-  learning_rate: 0.00001,
-  epochs: 10,
-  weight_decay: 0.05,
-  warmup_epochs: 5,
-}
 loader: {
   batch_size: 4,
   num_workers: 4,
 }
-train_cfg: {
-  init_loss_norm: 100,
-  clip_grad_l2norm: 1.0,
-  cls_prior_prob: 0.01,
-  center_sample: radius,
-  center_sample_radius: 1.5,
-  run_val: True
-}
 test_cfg: {
+  nms_method: 'none',
   voting_thresh: 0.7,
   pre_nms_topk: 2000,
   max_seg_num: 200,
@@ -55,4 +51,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_K400
-ckpt_folder: ./ckpt/FA_agn_K400/fineaction_clip_prop_K400_0
+ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1

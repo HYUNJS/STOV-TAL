@@ -5,7 +5,8 @@ dataset: {
   train_json_file: ./data/fineaction/annotations/training_K400_tal.json,
   feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   val_file_dir: './data/fineaction/annotations/',
-  val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
+  # val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
+  val_file_list: ['validation_K400_tal.json', 'validation_nonK400_tal.json'],
   class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
@@ -24,63 +25,16 @@ model: {
   max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
   n_mha_win_size: 19,
 }
-### ver0
-#opt: {
-#  learning_rate: 0.0001,
-##  eta_min: 0.0001 # 1e-8
-#  epochs: 3, # ver0
-#  warmup_epochs: 5,
-#  weight_decay: 0.05,
-#}
-#loader: {
-#  batch_size: 2,
-#  num_workers: 4,
-#}
-
-### ver1
-#opt: {
-#  learning_rate: 0.0001,
-##  eta_min: 0.0001 # 1e-8
-#  epochs: 5, # ver0
-#  warmup_epochs: 5,
-#  weight_decay: 0.05,
-#}
-#loader: {
-#  batch_size: 4,
-#  num_workers: 4,
-#}
-
-# ## ver2
-# opt: {
-#   learning_rate: 0.0001,
-# #  eta_min: 0.0001 # 1e-8
-#   epochs: 2, # ver0
-#   warmup_epochs: 3,
-#   weight_decay: 0.05,
-# }
-# loader: {
-#   batch_size: 4,
-#   num_workers: 4,
-# }
-
-## ver0 - 231010
 opt: {
-  # ## ver0
-  # learning_rate: 0.0001,
-  # epochs: 5,
-  ## ver1
   learning_rate: 0.00001,
   epochs: 10,
-
   weight_decay: 0.05,
   warmup_epochs: 5,
 }
 loader: {
-  ## ver0,1,2
   batch_size: 4,
   num_workers: 4,
 }
-
 train_cfg: {
   init_loss_norm: 100,
   clip_grad_l2norm: 1.0,
@@ -101,3 +55,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_K400
+ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_0

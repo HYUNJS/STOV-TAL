@@ -1,12 +1,10 @@
 dataset_name: fineaction
 train_split: ['training']
-val_split: ['validation']
+val_split: ['training']
 dataset: {
-  train_json_file: ./data/fineaction/annotations/training_K400_tal.json,
+  json_file: ./data/fineaction/annotations/training_K400_tal.json,
+  # json_file: ./data/fineaction/annotations/training_nonK400_tal.json,
   feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_clip_trainval,
-  val_file_dir: './data/fineaction/annotations/',
-  # val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
-  val_file_list: ['validation_K400_tal.json', 'validation_nonK400_tal.json'],
   class_agnostic: True,
   file_prefix: ~,
   file_ext: .npy,
@@ -25,23 +23,9 @@ model: {
   max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
   n_mha_win_size: 19,
 }
-opt: {
-  learning_rate: 0.00001,
-  epochs: 10,
-  weight_decay: 0.05,
-  warmup_epochs: 5,
-}
 loader: {
   batch_size: 4,
   num_workers: 4,
-}
-train_cfg: {
-  init_loss_norm: 100,
-  clip_grad_l2norm: 1.0,
-  cls_prior_prob: 0.01,
-  center_sample: radius,
-  center_sample_radius: 1.5,
-  run_val: True
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -55,4 +39,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_K400
-ckpt_folder: ./ckpt/FA_agn_K400/fineaction_clip_prop_K400_0
+ckpt_folder: ./ckpt/FA_agn_K400/fineaction_clip_prop_K400_1

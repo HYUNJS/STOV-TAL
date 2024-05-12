@@ -41,7 +41,7 @@ train_cfg: {
   cls_prior_prob: 0.01,
   center_sample: radius,
   center_sample_radius: 1.5,
-  run_val: True
+  run_val: False
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -55,4 +55,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_K400
-ckpt_folder: ./ckpt/FA_agn_K400/fineaction_clip_prop_K400_0
+ckpt_folder: ./ckpt/FA_agn_K400/fineaction_clip_prop_K400_1

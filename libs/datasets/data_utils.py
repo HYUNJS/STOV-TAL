@@ -1,4 +1,4 @@
-import os
+import os, re
 import copy
 import random
 import numpy as np
@@ -121,9 +121,13 @@ def parse_split_name(anno_filepath, cfg):
         anno_dirname = anno_filepath.split('/')[-2]
     if "PL_" in anno_dirname:
         split_name = 'PL'
-    elif anno_filename == 'validation_tal.json':
+    elif anno_filename == 'validation_tal.json' or re.match(f'validation_tal_\d+\.json', anno_filename):
         split_name = 'val_all'
-    elif anno_filename == 'training_tal.json':
+    elif anno_filename == 'training_tal.json' or re.match(f'training_tal_\d+\.json', anno_filename):
+        split_name = 'train_all'
+    elif re.match(f'training_R\d+k_tal\.json', anno_filename):
+        # match = re.match(r'(training_R\d+k)_tal\.json', anno_filename)
+        # split_name = match.group(1)
         split_name = 'train_all'
     elif '_K400_tal.json' in anno_filename:
         split_name = 'val_K400' if 'validation_' in anno_filename else 'train_K400'

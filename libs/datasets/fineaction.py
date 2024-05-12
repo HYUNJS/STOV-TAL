@@ -1,4 +1,4 @@
-import os, sys, json, torch, pickle
+import os, sys, json, torch, pickle, copy
 
 import numpy as np
 import pandas as pd
@@ -95,6 +95,39 @@ class FineActionDataset(Dataset):
             # we will mask out cliff diving
             'empty_label_ids': [],
         }
+                
+        ## load proposal filepath if True
+        self.load_proposal_result = kwargs.get('load_proposal_result', False)
+        if self.load_proposal_result:
+            proposal_filepath = kwargs.get('proposal_filepath', '')
+            assert proposal_filepath != ''
+            
+            with open(proposal_filepath, 'r') as fp:
+                tgt_results = json.load(fp)['results']
+            
+            proposals = {}
+            # for vid in tgt_results.keys():
+            for vid in self.vid_list:
+                if vid not in tgt_results or len(tgt_results[vid]) == 0:
+                    proposal_per_vid = {'video_id': vid, 
+                    'segments': torch.tensor(np.stack([[0.0, 0.1]]), dtype=torch.float32), 
+                    'scores': torch.tensor(np.stack([1.0]), dtype=torch.float32)}
+                    proposals[vid] = proposal_per_vid
+                    continue
+                    
+                results = tgt_results[vid]
+                segm_list = []
+                score_list = []
+                for row in results:
+                    segm_list.append(row['segment'])
+                    score_list.append(row['actionness'])
+
+                proposal_per_vid = {'video_id': vid, 
+                                    'segments': torch.tensor(np.stack(segm_list), dtype=torch.float32), 
+                                    'scores': torch.tensor(np.stack(score_list), dtype=torch.float32)}
+                proposals[vid] = proposal_per_vid
+            
+            self.proposals = proposals
 
     def get_attributes(self):
         return self.db_attributes
@@ -108,6 +141,7 @@ class FineActionDataset(Dataset):
         # fill in the db (immutable afterwards)
         dict_db = tuple()
         num_annos = 0
+        vid_list = []
         for key, value in json_db.items():
             # skip the video if not in the split
             if value['subset'].lower() not in self.split:
@@ -149,6 +183,7 @@ class FineActionDataset(Dataset):
             else:
                 segments = None
                 labels = None
+            vid_list.append(key)
             dict_db += ({'id': key,
                          'fps' : fps,
                          'duration' : duration,
@@ -156,6 +191,7 @@ class FineActionDataset(Dataset):
                          'labels' : labels
             }, )
         print(f"# video: {len(dict_db)} | # annos: {num_annos}")
+        self.vid_list = vid_list
 
         return dict_db
 
@@ -205,5 +241,10 @@ class FineActionDataset(Dataset):
             data_dict = truncate_feats(
                 data_dict, self.max_seq_len, self.trunc_thresh, feat_offset, self.crop_ratio
             )
+
+        ## add target proposals
+        if self.load_proposal_result:
+            vid = data_dict['video_id']
+            data_dict['proposals'] = copy.deepcopy(self.proposals[vid])
 
         return data_dict

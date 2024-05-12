@@ -74,6 +74,10 @@ def main(args):
         train_dataset, True, rng_generator, **cfg['loader'])
     run_val = cfg['train_cfg']['run_val']
     if run_val:
+        test_dataset_name = cfg['test_dataset_name']
+        if test_dataset_name == '':
+            test_dataset_name = cfg['dataset_name']
+            
         val_bs = 1
         val_file_list = cfg['dataset']['val_file_list']
         if len(val_file_list) != 0:
@@ -82,26 +86,26 @@ def main(args):
                 split_name = parse_split_name(val_filename, cfg)
                 split_name_list.append(split_name)
                 cfg['dataset']['val_json_file'] = osp.join(cfg['dataset']['val_file_dir'], val_filename)
-                val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
+                val_dataset = make_dataset(test_dataset_name, False, cfg['val_split'], **cfg['dataset'])
                 val_loader = make_data_loader(val_dataset, False, None, val_bs, cfg['loader']['num_workers'])
                 det_eval = ANETdetectionProp(
                     val_dataset.json_file,
                     val_dataset.split[0],
                     tiou_thresholds = val_dataset.tiou_thresholds,
-                    dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
+                    dataset_name=test_dataset_name, num_workers=cfg['loader']['num_workers'],
                     top_k=[10, 100, 300, 1000], top_kx=[1, 5]
                 )
                 val_loader_list.append(val_loader)
                 det_eval_list.append(det_eval)
         else:
-            val_dataset = make_dataset(cfg['dataset_name'], False, cfg['val_split'], **cfg['dataset'])
+            val_dataset = make_dataset(test_dataset_name, False, cfg['val_split'], **cfg['dataset'])
             split_name = parse_split_name(val_dataset.json_file, cfg)
             val_loader = make_data_loader(val_dataset, False, None, val_bs, cfg['loader']['num_workers'])
             det_eval = ANETdetectionProp(
                 val_dataset.json_file,
                 val_dataset.split[0],
                 tiou_thresholds = val_dataset.tiou_thresholds,
-                dataset_name=cfg['dataset_name'], num_workers=cfg['loader']['num_workers'],
+                dataset_name=test_dataset_name, num_workers=cfg['loader']['num_workers'],
                 top_k=[10, 100, 300, 1000], top_kx=[1, 5]
                 )
 
@@ -142,14 +146,20 @@ def main(args):
             print("=> no checkpoint found at '{}'".format(args.resume))
             return
 
-    # tgt_ckpt = './ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0/epoch_035.pth.tar'
-    # checkpoint = torch.load(tgt_ckpt, map_location=lambda storage, loc: storage.cuda(cfg['devices'][0]))
-    # # model_ema.module.load_state_dict(checkpoint['state_dict'])
-    # model.load_state_dict(checkpoint['state_dict_ema'])
-    # model_ema.module.load_state_dict(checkpoint['state_dict_ema'])
-    # # model.load_state_dict(checkpoint['state_dict'])
-    # # model_ema.module.load_state_dict(checkpoint['state_dict_ema'])
-    # del checkpoint
+    if cfg['pl_ema_ckpt'] != '':
+        tgt_ckpt = cfg['pl_ema_ckpt']
+        print(f"Load ckpt for EMA - {tgt_ckpt}")
+        checkpoint = torch.load(tgt_ckpt, map_location=lambda storage, loc: storage.cuda(cfg['devices'][0]))
+        load_ema_as_all_flag = cfg['load_ema_as_all_flag']
+        if load_ema_as_all_flag:
+            print("load_ema_as_all_flag")
+            model.load_state_dict(checkpoint['state_dict_ema'])
+            model_ema.module.load_state_dict(checkpoint['state_dict_ema'])
+        else:
+            print("load_as_ema_flag")
+            model_ema.module.load_state_dict(checkpoint['state_dict'])
+        
+        del checkpoint
 
     # save the current config
     with open(os.path.join(ckpt_folder, 'config.txt'), 'w') as fid:

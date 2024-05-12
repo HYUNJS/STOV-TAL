@@ -8,7 +8,8 @@ train_split: ['training']
 val_split: ['validation']
 dataset: {
   split_id: -1, # input proper split_id
-  train_json_file: "./data/anet13/PL_non50_clip/T-50-{split_id}_E-non50-{split_id}_th-0.05.json",
+  # train_json_file: "./data/anet13/PL_non50_clip/T-50-{split_id}_E-non50-{split_id}_th-0.05.json",
+  train_json_file: "./data/anet13/PL_non50_clip_ver_3/T-AN-50-{split_id}_E-AN-non50-{split_id}_th-0.20.json",
   feat_folder: ./data/anet13/vificlip_feats/F16_w16F_s4F_clip_trainval,
   val_file_dir: './data/anet13/annotations/train_50_test_50',
   val_file_list: ["validation_50-{split_id}_tal.json", "validation_non50-{split_id}_tal.json"],
@@ -32,15 +33,16 @@ model: {
   # 192 - 96 - 48 - 24 - 12 - 6
   n_mha_win_size: [7, 7, 7, 7, 7, -1],
   n_head: 4,
-  # embd_dim: 256,
-  # fpn_dim: 256,
-  # head_dim: 256,
-  # use_abs_pe: True,
+  embd_dim: 256,
+  fpn_dim: 256,
+  head_dim: 256,
+  use_abs_pe: True,
 }
 opt: {
   ## ver3
   learning_rate: 0.00001,
-  epochs: 10,
+  epochs: 5,
+  warmup_epochs: 5,
   weight_decay: 0.05,
 }
 loader: {
@@ -56,7 +58,7 @@ train_cfg: {
   label_smoothing: 0.1,
   droppath: 0.1,
   loss_weight: 2.0,
-  run_val: True,
+  run_val: False,
 }
 
 # similar to THUMOS
@@ -74,3 +76,4 @@ test_cfg: {
   duration_thresh: 0.001,
 }
 output_folder: ./ckpt/AN_agn_PL_50
+pl_ema_ckpt: "./ckpt/AN_agn_50/anet13_clip_prop_50_tmpl_split{split_id}_3/epoch_015.pth.tar"

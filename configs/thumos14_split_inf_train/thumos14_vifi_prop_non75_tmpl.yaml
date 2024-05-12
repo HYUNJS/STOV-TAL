@@ -23,24 +23,9 @@ model: {
   max_buffer_len_factor: 6.0,
   n_mha_win_size: 19,
 }
-opt: {
-  learning_rate: 0.0001,
-  # eta_min: 0.0001, # 1e-8
-  epochs: 30,
-  warmup_epochs: 5,
-  weight_decay: 0.05,
-}
 loader: {
   batch_size: 2,
   num_workers: 4,
-}
-train_cfg: {
-  init_loss_norm: 100,
-  clip_grad_l2norm: 1.0,
-  cls_prior_prob: 0.01,
-  center_sample: radius,
-  center_sample_radius: 1.5,
-  run_val: True,
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -55,4 +40,5 @@ test_cfg: {
 }
 # ckpt_folder: ./ckpt/path_to_ckpt
 #ckpt_folder: "./ckpt/TH_agn_75/thumos14_vifi_prop_75_tmpl_split{split_id}_1"
-ckpt_folder: "./ckpt/TH_agn_75/thumos14_vifi_prop_75_tmpl_split{split_id}_0_ema"
+ckpt_folder: "./ckpt/TH_agn_75/thumos14_vifi_prop_75_tmpl_split{split_id}_0"
+# ckpt_folder: "./ckpt/TH_agn_75/thumos14_vifi_prop_75_tmpl_split{split_id}_0_ema"

@@ -46,7 +46,7 @@ def main(args):
         else:
             ckpt_file_list = sorted(glob.glob(os.path.join(ckpt_folder, '*.pth.tar')))
             ckpt_file = ckpt_file_list[-1]
-        assert os.path.exists(ckpt_file)
+        assert os.path.exists(ckpt_file), f"Failed to load from {ckpt_file}"
         print("Load ", ckpt_file)
 
     if args.topk > 0:
@@ -112,15 +112,24 @@ def main(args):
     if CLIP_inf_only:
         clip_topk = cfg['CLIP']['topk']
         clip_cos = not cfg['CLIP']['softmax']
+        clip_score_fusion = cfg['CLIP']['fusion']
+        assert clip_score_fusion in ['a_only', 'c_only', 'art_mean', 'geo_mean'], f"Fusion {clip_score_fusion}"
+        ## topK cfg
         if clip_topk > 1:
             proposal_dirname = f'proposal_CLIP_clsK{clip_topk}'
             metric_dirname = f'metric_CLIP_clsK{clip_topk}'
         else:
             proposal_dirname = f'proposal_CLIP_cls'
             metric_dirname = f'metric_CLIP_cls'
+        ## softmax vs cos sim
         if clip_cos:
             proposal_dirname += '_cos'
             metric_dirname += '_cos'
+        ## score fusion
+        if clip_score_fusion != 'geo_mean':
+            proposal_dirname += f'_fusion-{clip_score_fusion}'
+            metric_dirname += f'_fusion-{clip_score_fusion}'
+        
         proposal_dirname += f"_{tgt_eval_file}"
         metric_dirname += f"_{tgt_eval_file}"
     elif cfg['dataset']['class_agnostic']:
@@ -156,10 +165,16 @@ def main(args):
         CLIP_inf_only=CLIP_inf_only,
     )
     
-    """6. evaluate proposal recall"""
+    ## save output in json
     with open(proposal_filepath, 'w') as fp:
         json.dump(results, fp)
     
+    if not cfg['test_cfg']['eval_flag']:
+        end = time.time()
+        print("All done! Total time: {:0.2f} sec".format(end - start))
+        return
+       
+    """6. evaluate proposal recall"""
     # tiou_thresholds = [0.5]
     dataset_name = cfg['dataset_name']
     if dataset_name == 'anet13':
@@ -169,6 +184,8 @@ def main(args):
         tiou_thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
     elif dataset_name == 'fineaction':
         # tiou_thresholds = [0.5, 0.75, 0.95]
+        tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+    elif dataset_name == 'uk600':
         tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
     else:
         raise NotImplemented(f"{dataset_name} evaluation is not implemented")

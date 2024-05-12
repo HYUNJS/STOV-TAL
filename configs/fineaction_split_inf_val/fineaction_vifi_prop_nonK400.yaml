@@ -2,7 +2,6 @@ dataset_name: fineaction
 train_split: ['training']
 val_split: ['validation']
 dataset: {
-#  json_file: ./data/fineaction/annotations/validation_K400_tal.json,
   json_file: ./data/fineaction/annotations/validation_nonK400_tal.json,
   feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   class_agnostic: True,
@@ -39,4 +38,7 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_K400
-ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1
+# ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/FAk400_vifi_prop_k400_UKR10k-PL_1_th-0.30_load_as_ema
+ckpt_folder: ./ckpt/FA_agn_PL_K400/FAk400_vifi_prop_k400_UKR10k-PL_1_th-0.20_load_as_ema

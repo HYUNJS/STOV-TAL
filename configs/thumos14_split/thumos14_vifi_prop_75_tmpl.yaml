@@ -27,10 +27,7 @@ model: {
 }
 opt: {
   learning_rate: 0.0001,
-  # eta_min: 0.0001, # 1e-8
-  # epochs: 5,
-   epochs: 30, # ver0
-#  epochs: 10, # ver1
+  epochs: 30, # ver0
   warmup_epochs: 5,
   weight_decay: 0.05,
 }
@@ -44,7 +41,7 @@ train_cfg: {
   cls_prior_prob: 0.01,
   center_sample: radius,
   center_sample_radius: 1.5,
-  run_val: True,
+  run_val: False,
 }
 test_cfg: {
   voting_thresh: 0.7,

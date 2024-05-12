@@ -23,11 +23,10 @@ model: {
   n_mha_win_size: 19,
 }
 opt: {
-  learning_rate: 0.00001,
+  learning_rate: 0.0001,
   epochs: 10,
   weight_decay: 0.05,
   warmup_epochs: 5,
-  # eta_min: 0.0001 # 1e-8
 }
 loader: {
   batch_size: 4,

@@ -11,6 +11,7 @@ libs/utils/dist
 libs/utils/nms_1d_cpu.egg-info
 **/build
 .vscode/
+opental*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

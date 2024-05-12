@@ -6,6 +6,7 @@ DEFAULTS = {
     "init_rand_seed": 1234567891,
     # dataset loader, specify the dataset here
     "dataset_name": "epic",
+    "test_dataset_name": "",
     "devices": ['cuda:0'], # default: single gpu
     "train_split": ('training', ),
     "val_split": ('validation', ),
@@ -42,7 +43,13 @@ DEFAULTS = {
                 **{f"non50-{i}": f"./data/anet13/annotations/train_50_test_50/anet13_50-{i}_nonoverlap_labels.csv" for i in range(10)},
                 **{f"75-{i}": f"./data/anet13/annotations/train_75_test_25/anet13_75-{i}_overlap_labels.csv" for i in range(10)},
                 **{f"non75-{i}": f"./data/anet13/annotations/train_75_test_25/anet13_75-{i}_nonoverlap_labels.csv" for i in range(10)},
-            }
+            },
+            'uk600': {
+                'PL': './data/uk600/annotations/uk600_labels.csv',
+                'all': './data/uk600/annotations/uk600_labels.csv',
+                'K400': './data/uk600/annotations/uk600_K400_overlap_labels.csv',
+                'nonK400': './data/uk600/annotations/uk600_K400_nonoverlap_labels.csv',
+            },
         },
         'val_json_file': '',
         'val_file_dir': '',
@@ -89,6 +96,8 @@ DEFAULTS = {
         "softmax": False,
         "topk": 1,
         "nms": False,
+        "fusion": 'geo_mean', # 'a_only', 'c_only', 'art_mean', 'geo_mean'
+        "ctx_init": "", # "a photo of a"
     },
     # network architecture
     "model": {
@@ -164,6 +173,9 @@ DEFAULTS = {
         "multiclass_nms": True,
         "ext_score_file": None,
         "voting_thresh" : 0.75,
+        "load_proposal_result": False,
+        "proposal_filepath": '',
+        "eval_flag": True,
     },
     # optimizer (for training)
     "opt": {
@@ -184,7 +196,9 @@ DEFAULTS = {
         "schedule_steps": [],
         "schedule_gamma": 0.1,
     },
-    "ckpt_folder": ''
+    "ckpt_folder": '',
+    "pl_ema_ckpt": "",
+    "load_ema_as_all_flag": False,
 }
 
 def _merge(src, dst):
@@ -220,6 +234,8 @@ def _update_split_id(config):
         config['dataset']['val_json_file'] = config['dataset']['val_json_file'].format(split_id=split_id)
         config['dataset']['val_file_list'] = [s.format(split_id=split_id) for s in config['dataset']['val_file_list']]
         config['ckpt_folder'] = config['ckpt_folder'].format(split_id=split_id)
+        config['pl_ema_ckpt'] = config['pl_ema_ckpt'].format(split_id=split_id)
+        
     return config
 
 def load_config(config_file, defaults=DEFAULTS):
@@ -246,6 +262,8 @@ def merge_args(config, cfg_list):
 
         if v.isdigit():
             v = int(v)
+        if v in ['True', 'False']:
+            v = eval(v)
         d[subkey] = v
         
         if subkey == 'split_id':

@@ -26,13 +26,13 @@ model: {
   n_mha_win_size: 19,
 }
 opt: {
-  learning_rate: 0.0001,
+  learning_rate: 0.00001,
   epochs: 10,
   weight_decay: 0.05,
   warmup_epochs: 5,
 }
 loader: {
-  batch_size: 8,
+  batch_size: 4,
   num_workers: 4,
 }
 
@@ -56,4 +56,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_all
-ckpt_folder: ./ckpt/FA_agn_all/fineaction_vifi_prop_all_0
+ckpt_folder: ./ckpt/FA_agn_all/fineaction_vifi_prop_all_1

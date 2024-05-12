@@ -50,5 +50,5 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: False,
 }
-output_folder: ./ckpt/TH_agn_all
-ckpt_folder: ./ckpt/TH_agn_all/thumos14_clip_prop_all_0
+output_folder: ./ckpt/TH_agn_all_240125
+# ckpt_folder: ./ckpt/TH_agn_all/thumos14_clip_prop_all_0

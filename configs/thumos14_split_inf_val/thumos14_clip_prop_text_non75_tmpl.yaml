@@ -5,7 +5,6 @@ dataset: {
   split_id: -1, # input proper split_id
   json_file: "./data/thumos14/annotations/train_75_test_25/validation_non75-{split_id}_tal.json",
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_clip_trainval,
-#  class_agnostic: True,
   class_agnostic: False,
   file_prefix: ~,
   file_ext: .npy,
@@ -23,10 +22,7 @@ CLIP: {
   inf_only: True,
   ## inference details
   softmax: True,
-#  softmax: False,
   topk: 1,
-#  topk: 2,
-#  nms: False,
   nms: True,
 }
 model: {
@@ -34,27 +30,11 @@ model: {
   max_buffer_len_factor: 6.0,
   n_mha_win_size: 19,
 }
-opt: {
-  learning_rate: 0.0001,
-  # eta_min: 0.0001, # 1e-8
-  epochs: 30,
-  warmup_epochs: 5,
-  weight_decay: 0.05,
-}
 loader: {
   batch_size: 2,
   num_workers: 4,
 }
-train_cfg: {
-  init_loss_norm: 100,
-  clip_grad_l2norm: 1.0,
-  cls_prior_prob: 0.01,
-  center_sample: radius,
-  center_sample_radius: 1.5,
-  run_val: True,
-}
 test_cfg: {
-#  load_ema: False,
   nms_method: 'none',
   voting_thresh: 0.7,
   pre_nms_topk: 2000,
@@ -67,4 +47,10 @@ test_cfg: {
   multiclass_nms: False,
 }
 # ckpt_folder: ./ckpt/path_to_ckpt
-ckpt_folder: "./ckpt/TH_agn_75/thumos14_clip_prop_75_tmpl_split{split_id}_0_ema"
+# ckpt_folder: "./ckpt/TH_agn_75/thumos14_clip_prop_75_tmpl_split{split_id}_0"
+# ckpt_folder: "./ckpt/TH_agn_75/thumos14_clip_prop_75_tmpl_split{split_id}_0_ema"
+# ckpt_folder: "./ckpt/TH_agn_PL_75/thumos14_clip_prop_non75_PL_tmpl_split{split_id}_1_th-0.05_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_PL_75/thumos14_clip_prop_non75_PL_tmpl_split{split_id}_1_th-0.20_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_PL_75/thumos14_clip_prop_non75_PL_tmpl_split{split_id}_1_th-0.05_min-5_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_PL_75/thumos14_clip_prop_non75_PL_tmpl_split{split_id}_1_th-0.05_min-5_load_as_ema/"
+ckpt_folder: "./ckpt/TH_agn_PL_75/thumos14_clip_prop_non75_PL_tmpl_split{split_id}_1_th-0.10_load_as_ema_PL-vifi/"

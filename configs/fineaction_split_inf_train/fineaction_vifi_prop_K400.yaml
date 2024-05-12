@@ -3,7 +3,6 @@ train_split: ['training']
 val_split: ['training']
 dataset: {
   json_file: ./data/fineaction/annotations/training_K400_tal.json,
-  # json_file: ./data/fineaction/annotations/training_nonK400_tal.json,
   feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   class_agnostic: True,
   file_prefix: ~,

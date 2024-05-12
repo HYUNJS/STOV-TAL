@@ -88,8 +88,8 @@ if __name__ == '__main__':
     # eval(gt_nonK400_train_filepath, tgt_filepath4, split=split)
     # eval(gt_nonK400_train_filepath, tgt_filepath5, split=split)
     
-    split='validation'
-    tgt_filepath1 = './ckpt/TH_prompt/vifi_prompt_K400_softmax_1/proposal_validation_nonK400_tal/vifi_prompt_K400_softmax_1_epoch_035.json'
+    # split='validation'
+    # tgt_filepath1 = './ckpt/TH_prompt/vifi_prompt_K400_softmax_1/proposal_validation_nonK400_tal/vifi_prompt_K400_softmax_1_epoch_035.json'
     # tgt_filepath1 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_3/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_3_epoch_005.json'
     # tgt_filepath2 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_3/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_3_epoch_010.json'
     # tgt_filepath3 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_2_epoch_030.json'
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # tgt_filepath6 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_pseudo_0-05_2_epoch_025.json'
     # tgt_filepath7 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_pseudo_0-05_2_epoch_030.json'
     # tgt_filepath8 = './ckpt/TH_prompt/vifi_prompt_K400_sigmoid_pseudo_0-05_2/proposal_validation_nonK400_tal/vifi_prompt_K400_sigmoid_pseudo_0-05_2_epoch_035.json'
-    eval_mAP(gt_nonK400_val_filepath, tgt_filepath1, split=split)
+    # eval_mAP(gt_nonK400_val_filepath, tgt_filepath1, split=split)
     # eval_mAP(gt_nonK400_val_filepath, tgt_filepath2, split=split)
     # eval_mAP(gt_nonK400_val_filepath, tgt_filepath3, split=split)
     # eval_mAP(gt_nonK400_val_filepath, tgt_filepath4, split=split)

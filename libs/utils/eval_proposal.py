@@ -711,7 +711,8 @@ def interpolated_prec_rec(prec, rec):
     ap = np.sum((mrec[idx] - mrec[idx - 1]) * mprec[idx])
     return ap
 
-def run_mRec_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, num_workers=8, split='validation', verbose=True, get_csv=False):
+def run_mRec_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, 
+                  num_workers=8, split='validation', verbose=True, get_csv=False):
     print(f'Evaluate split - {split}')
     evaluator = ANETdetection(
         gt_filepath,

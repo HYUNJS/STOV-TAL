@@ -28,8 +28,10 @@ model: {
 opt: {
   learning_rate: 0.00001,
   epochs: 10,
-  weight_decay: 0.05,
   warmup_epochs: 5,
+  # epochs: 2,
+  # warmup_epochs: 2,
+  weight_decay: 0.05,
 }
 loader: {
   batch_size: 4,
@@ -41,7 +43,7 @@ train_cfg: {
   cls_prior_prob: 0.01,
   center_sample: radius,
   center_sample_radius: 1.5,
-  run_val: True
+  run_val: False
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -55,4 +57,6 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_K400
-ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_0
+# ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_0
+pl_ema_ckpt: "./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema/epoch_010.pth.tar"
+# pl_ema_ckpt: "./ckpt/FA_agn_UKR100k-PL_K400/FAk400_vifi_prop_k400_UKR100k-PL_6_th-0.40_load_as_ema/epoch_004.pth.tar"

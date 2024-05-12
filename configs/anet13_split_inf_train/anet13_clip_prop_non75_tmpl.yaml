@@ -30,10 +30,10 @@ model: {
   # 192 - 96 - 48 - 24 - 12 - 6
   n_mha_win_size: [7, 7, 7, 7, 7, -1],
   n_head: 4,
-  # embd_dim: 256,
-  # fpn_dim: 256,
-  # head_dim: 256,
-  # use_abs_pe: True,
+  embd_dim: 256,
+  fpn_dim: 256,
+  head_dim: 256,
+  use_abs_pe: True,
 }
 opt: {
   learning_rate: 0.001,

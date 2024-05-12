@@ -40,10 +40,10 @@ model: {
   # 192 - 96 - 48 - 24 - 12 - 6
   n_mha_win_size: [7, 7, 7, 7, 7, -1],
   n_head: 4,
-  # embd_dim: 256,
-  # fpn_dim: 256,
-  # head_dim: 256,
-  # use_abs_pe: True,
+  embd_dim: 256,
+  fpn_dim: 256,
+  head_dim: 256,
+  use_abs_pe: True,
 }
 opt: {
   learning_rate: 0.001,
@@ -82,4 +82,6 @@ test_cfg: {
   # ext_score_file: ./data/anet_1.3/annotations/cuhk_val_simp_share.json,
   duration_thresh: 0.001,
 }
-ckpt_folder: "./ckpt/AN_agn_75/anet13_vifi_prop_75_tmpl_split{split_id}_3"
+# ckpt_folder: "./ckpt/AN_agn_75/anet13_vifi_prop_75_tmpl_split{split_id}_3"
+# ckpt_folder: "./ckpt/AN_agn_PL_75/anet13_vifi_prop_non75_PL_tmpl_split{split_id}_5_th-0.50_load_as_ema"
+ckpt_folder: "./ckpt/AN_agn_PL_75/anet13_vifi_prop_non75_PL_tmpl_split{split_id}_6_th-0.20_load_as_ema"

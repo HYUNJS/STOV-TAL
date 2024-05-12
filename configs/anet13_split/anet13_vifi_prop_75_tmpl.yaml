@@ -33,10 +33,10 @@ model: {
   # 192 - 96 - 48 - 24 - 12 - 6
   n_mha_win_size: [7, 7, 7, 7, 7, -1],
   n_head: 4,
-  # embd_dim: 256,
-  # fpn_dim: 256,
-  # head_dim: 256,
-  # use_abs_pe: True,
+  embd_dim: 256,
+  fpn_dim: 256,
+  head_dim: 256,
+  use_abs_pe: True,
 }
 opt: {
   # ## ver0
@@ -66,7 +66,7 @@ train_cfg: {
   label_smoothing: 0.1,
   droppath: 0.1,
   loss_weight: 2.0,
-  run_val: True,
+  run_val: False,
 }
 
 # similar to THUMOS

@@ -1,0 +1,62 @@
+dataset_name: joint
+test_dataset_name: THUMOS14
+train_split: ['training']
+val_split: ['validation']
+dataset: {
+  train_json_file: ./data/joint/PL_TH-K400_to_UK600-R10k_vifi_ver_0/T-TH-K400_E-UK600-R10k_th-0.10_min-1.json,
+  feat_folder: ./data/joint/vificlip_feats/F16_w16F_s4F_ep10_trainval,
+  val_file_dir: './data/thumos14/annotations/',
+  # val_file_list: ['validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
+  val_file_list: ['validation_K400_tal.json', 'validation_nonK400_tal.json'],
+  class_agnostic: True,
+  file_prefix: ~,
+  file_ext: .npy,
+  num_classes: 1,
+  input_dim: 512,
+  feat_stride: 4,
+  num_frames: 16,
+  # serve as data augmentation
+  trunc_thresh: 0.5,
+  crop_ratio: [0.9, 1.0],
+  max_seq_len: 2304,
+  default_fps: 30,
+}
+model: {
+  fpn_type: identity,
+  max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
+  n_mha_win_size: 19,
+}
+opt: {
+  learning_rate: 0.00001,
+  epochs: 2,
+  warmup_epochs: 2,
+  weight_decay: 0.05,
+}
+loader: {
+  batch_size: 4,
+  num_workers: 4,
+}
+
+train_cfg: {
+  init_loss_norm: 100,
+  clip_grad_l2norm: 1.0,
+  cls_prior_prob: 0.01,
+  center_sample: radius,
+  center_sample_radius: 1.5,
+  # run_val: True
+  run_val: False
+}
+test_cfg: {
+  voting_thresh: 0.7,
+  pre_nms_topk: 2000,
+  max_seg_num: 200,
+  min_score: 0.001,
+  # when using external scores, our model is generating "proposals"
+  # multiclass_nms: False,
+  # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
+  # comment out L47-48 and uncomment L50 to disable score fusion
+  multiclass_nms: False,
+  eval_flag: False,
+}
+output_folder: ./ckpt/TH_agn_UKR10k-PL_K400/
+pl_ema_ckpt: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0/epoch_035.pth.tar"

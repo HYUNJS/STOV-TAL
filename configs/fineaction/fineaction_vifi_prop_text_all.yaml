@@ -19,6 +19,18 @@ dataset: {
   max_seq_len: 2304,
   default_fps: 30,
 }
+CLIP: {
+  inf_only: True,
+  weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
+  ## inference details
+  softmax: True,
+#  softmax: False,
+  topk: 1,
+#  topk: 2,
+#  nms: False,
+  nms: True,
+  # fusion: 'c_only',
+}
 model: {
   fpn_type: identity,
   max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
@@ -28,8 +40,8 @@ loader: {
   batch_size: 8,
   num_workers: 4,
 }
-
 test_cfg: {
+  nms_method: 'none',
   voting_thresh: 0.7,
   pre_nms_topk: 2000,
   max_seg_num: 200,
@@ -41,4 +53,11 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/FA_agn_all
-ckpt_folder: ./ckpt/FA_agn_all/fineaction_vifi_prop_all_0
+# ckpt_folder: ./ckpt/FA_agn_all/fineaction_vifi_prop_all_1
+# ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1
+# ckpt_folder: './ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_4_th-0.10_load_as_ema/'
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_1_th-0.30_load_as_ema/
+# ckpt_folder: ./ckpt/TH2FA_agn_all/TH2FA_vifi_prop_all_PL_5_th-0.05_load_as_ema/
+# ckpt_folder: ./ckpt/TH2FA_agn_all/TH2FA_vifi_prop_all_PL_2_th-0.05_load_as_ema/
+ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.10/

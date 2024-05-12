@@ -24,10 +24,7 @@ CLIP: {
   weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
   ## inference details
   softmax: True,
-#  softmax: False,
   topk: 1,
-#  topk: 2,
-#  nms: False,
   nms: True,
 }
 model: {
@@ -45,14 +42,6 @@ opt: {
 loader: {
   batch_size: 2,
   num_workers: 4,
-}
-train_cfg: {
-  init_loss_norm: 100,
-  clip_grad_l2norm: 1.0,
-  cls_prior_prob: 0.01,
-  center_sample: radius,
-  center_sample_radius: 1.5,
-  run_val: True,
 }
 test_cfg: {
 #  load_ema: False,
@@ -73,8 +62,10 @@ test_cfg: {
 #ckpt_folder: "./ckpt/TH_agn_all/thumos14_vifi_prop_all_0"
 #ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_0"
 #ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_as_ema/"
-ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_ema_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_ema_as_ema/"
 #ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_ema_as_all/"
 #ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_dup-0.50_load_ema_as_ema/"
 #ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_dup-0.50_load_all/"
-
+# ckpt_folder: "./ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.30_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.05_load_as_ema/"
+ckpt_folder: "./ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_6_th-0.20_load_as_ema/"

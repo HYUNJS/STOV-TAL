@@ -4,9 +4,12 @@ val_split: ['validation']
 dataset: {
 #  train_json_file: "./data/thumos14/annotations/training_K400_tal.json",
 #  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_th-0.05.json", # variable
-  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_th-0.05_duplicate-0.5.json", # variable
+  # train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_th-0.05_duplicate-0.5.json", # variable
 #  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_top-5.json", # variable
 #  train_json_file: "./data/thumos14/PL_nonK400_vifi/T-K400_E-nonK400_top-5_duplicate-0.5.json", # variable
+  # train_json_file: "./data/thumos14/PL_nonK400_vifi_ver_0/T-TH-K400_E-TH-nonK400_th-0.05_min-1.json", # variable
+  # train_json_file: "./data/thumos14/PL_nonK400_vifi_ver_0/T-TH-K400_E-TH-nonK400_th-0.10_min-1.json", # variable
+  train_json_file: "./data/thumos14/PL_nonK400_vifi_ver_0/T-TH-K400_E-TH-nonK400_th-0.20_min-1.json", # variable
   feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   val_file_dir: './data/thumos14/annotations',
   val_file_list: [ 'validation_tal.json', 'validation_K400_tal.json', 'validation_nonK400_tal.json'],
@@ -29,17 +32,8 @@ model: {
   n_mha_win_size: 19,
 }
 opt: {
-#  learning_rate: 0.0001,
-  # eta_min: 0.0001, # 1e-8
-  # epochs: 5,
-#  epochs: 30, # ver0
-#  epochs: 10, # ver1
-
-  ## ver2
-  learning_rate: 0.00001,
-  eta_min: 0.00001, # 1e-8
-  epochs: 10,
-
+  learning_rate: 0.0001,
+  epochs: 10, # ver1
   warmup_epochs: 5,
   weight_decay: 0.05,
 }
@@ -53,7 +47,7 @@ train_cfg: {
   cls_prior_prob: 0.01,
   center_sample: radius,
   center_sample_radius: 1.5,
-  run_val: True,
+  run_val: False,
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -67,3 +61,4 @@ test_cfg: {
   multiclass_nms: False,
 }
 output_folder: ./ckpt/TH_agn_PL_K400
+pl_ema_ckpt: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0/epoch_035.pth.tar"

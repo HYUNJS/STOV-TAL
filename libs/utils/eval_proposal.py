@@ -142,7 +142,8 @@ class ANETdetection(object):
         num_workers=8,
         dataset_name=None,
         label_filepath=None,
-        cls_agnostic_flag=False
+        cls_agnostic_flag=False,
+        tgt_vids=None
     ):
 
         self.tiou_thresholds = tiou_thresholds
@@ -161,7 +162,11 @@ class ANETdetection(object):
         self.split = split
         self.ground_truth = load_gt_seg_from_json(
             ant_file, split=self.split, label=label, label_offset=label_offset)
-
+        
+        # TODO. filter target vids
+        if tgt_vids is not None:
+            self.ground_truth = self.ground_truth[self.ground_truth['video-id'].isin(tgt_vids)].reset_index(drop=True)
+        
         # remove labels that does not exists in gt
         self.activity_index = {j: i for i, j in enumerate(sorted(self.ground_truth['label'].unique()))}
         self.ground_truth['label'] = self.ground_truth['label'].replace(self.activity_index)
@@ -265,14 +270,14 @@ class ANETdetection(object):
 
         return ap, recallx, recall
 
-    def eval_cls_agnostic(self, preds):
+    def eval_cls_agnostic(self, preds, tiou_thresholds=[0.5]):
         ## compute proposal recall
-        prop_recallx = self.wrapper_compute_topkx_proposal_recall(preds)
-        prop_recall = self.wrapper_compute_topk_proposal_recall(preds)
+        prop_recallx = self.wrapper_compute_topkx_proposal_recall(preds, tiou_thresholds)
+        prop_recall = self.wrapper_compute_topk_proposal_recall(preds, tiou_thresholds)
 
         return prop_recallx, prop_recall
 
-    def evaluate_proposal(self, preds, verbose=False):
+    def evaluate_proposal(self, preds, tiou_thresholds=[0.5], verbose=False):
         if isinstance(preds, pd.DataFrame):
             assert 'label' in preds
         elif isinstance(preds, str) and os.path.isfile(preds):
@@ -288,11 +293,13 @@ class ANETdetection(object):
                 'score': preds['score'].tolist()
             })
 
-        prop_recallx, prop_recall = self.eval_cls_agnostic(preds)
+        prop_recallx, prop_recall = self.eval_cls_agnostic(preds, tiou_thresholds)
+        # prop_recallx, prop_recall = self.eval_cls_agnostic(preds)
         prop_Rxs, prop_Rs = prop_recallx * 100, prop_recall * 100
         if verbose:
-            prop_rec1x, prop_rec5x = prop_Rxs[0, 0], prop_Rxs[0, 1]
-            prop_rec100, prop_rec300, prop_rec1000 = prop_Rs[0, 1], prop_Rs[0, 2], prop_Rs[0, 3]
+            tgt_tiou_idx = np.nonzero(np.array(tiou_thresholds) == 0.5)[0][0]
+            prop_rec1x, prop_rec5x = prop_Rxs[tgt_tiou_idx, 0], prop_Rxs[tgt_tiou_idx, 1]
+            prop_rec100, prop_rec300, prop_rec1000 = prop_Rs[tgt_tiou_idx, 1], prop_Rs[tgt_tiou_idx, 2], prop_Rs[tgt_tiou_idx, 3]
             print(f'    pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
                 f' | pR@300: {prop_rec300:.3f} | pR@1000: {prop_rec1000:.3f} | #preds: {len(preds)}')
 
@@ -733,13 +740,20 @@ def run_mRec_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset,
     print(f"Threshold {thresh}")
     pred_tgt = pred_df[pred_df['score'] >= thresh]
 
-    prop_Rxs, prop_Rs = evaluator.evaluate_proposal(pred_tgt)
-    prop_rec1x = prop_Rxs[0, 0]
-    prop_rec5x = prop_Rxs[0, 1]
-    prop_rec100 = prop_Rs[0, 1]
-    prop_rec300 = prop_Rs[0, 2]
-    prop_rec1000 = prop_Rs[0, 3]
+    prop_Rxs, prop_Rs = evaluator.evaluate_proposal(pred_tgt, tiou_thresholds)
+    # prop_Rxs, prop_Rs = evaluator.evaluate_proposal(pred_tgt)
+    tgt_tiou_idx = np.nonzero(np.array(tiou_thresholds) == 0.5)[0][0]
+
+    prop_rec1x = prop_Rxs[tgt_tiou_idx, 0]
+    prop_rec5x = prop_Rxs[tgt_tiou_idx, 1]
+    prop_rec100 = prop_Rs[tgt_tiou_idx, 1]
+    prop_rec300 = prop_Rs[tgt_tiou_idx, 2]
+    prop_rec1000 = prop_Rs[tgt_tiou_idx, 3]
     results_dict = {'R@1x': prop_rec1x, 'R@5x': prop_rec5x, 'R@100': prop_rec100, 'R@300':prop_rec300, 'R@1000': prop_rec1000}
+    
+    for idx, tiou in enumerate(tiou_thresholds):
+        results_dict.update({f"R@1x-tiou@{tiou}": prop_Rxs[idx, 0]})
+    
     result_in_csv = ','.join([f'{f:.5f}' for f in list(results_dict.values())] + [str(len(pred_tgt))])
     if verbose:
         print(f'    pR@1x: {prop_rec1x:.3f} | pR@5x: {prop_rec5x:.3f} | pR@100: {prop_rec100:.3f}'
@@ -753,6 +767,14 @@ def run_mRec_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset,
 
 def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, num_workers=8, split='validation', tgt_cls_arr=None, verbose=True, get_csv=False):
     print(f'Evaluate split - {split}')
+    if pred_filepath.endswith('.pkl'):
+        with open(pred_filepath, 'rb') as fp:
+            pred = pickle.load(fp)
+        pred_df = pd.DataFrame.from_dict(pred)
+    elif pred_filepath.endswith('.json'):
+        pred_df = load_pred_seg_from_json(pred_filepath, label='label_id')
+    tgt_vids = np.sort(pred_df['video-id'].unique())
+    
     evaluator = ANETdetection(
         gt_filepath,
         split,
@@ -760,15 +782,9 @@ def run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, thresh, dataset, n
         dataset_name=dataset, num_workers=num_workers,
         top_k=[100, 300],
         top_kx=[1, 5],
+        tgt_vids=tgt_vids
     )
-
-    if pred_filepath.endswith('.pkl'):
-        with open(pred_filepath, 'rb') as fp:
-            pred = pickle.load(fp)
-        pred_df = pd.DataFrame.from_dict(pred)
-    elif pred_filepath.endswith('.json'):
-        pred_df = load_pred_seg_from_json(pred_filepath, label='label_id')
-
+    
     print(f"Threshold {thresh}")
     pred_tgt = pred_df[pred_df['score'] >= thresh]
 

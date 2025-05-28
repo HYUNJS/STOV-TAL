@@ -44,7 +44,7 @@ train_cfg: {
   cls_prior_prob: 0.01,
   center_sample: radius,
   center_sample_radius: 1.5,
-  run_val: True,
+  run_val: False,
 }
 test_cfg: {
   voting_thresh: 0.7,
@@ -57,4 +57,4 @@ test_cfg: {
   # comment out L47-48 and uncomment L50 to disable score fusion
   multiclass_nms: False,
 }
-output_folder: ./ckpt/TH_agn_k400
+output_folder: ./ckpt/TH_agn_K400

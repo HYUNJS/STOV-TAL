@@ -1,154 +1,103 @@
-import os
-import os.path
+import os, argparse
 import pandas as pd
 import os.path as osp
 from libs.utils import run_mRec_eval, run_mAP_eval
 
 def eval_mAP(dataset_name, gt_filepath, pred_filepath, score_thresh=0.0, tgt_cls_arr=None, split='validation'):
     print(f'{pred_filepath} - {score_thresh}')
-
     mAPs = run_mAP_eval(gt_filepath, pred_filepath, tiou_thresholds, score_thresh, dataset_name,
                      num_workers=8, split=split, tgt_cls_arr=tgt_cls_arr)
-
     return mAPs
 
 def eval_mRec(dataset_name, gt_filepath, pred_filepath, score_thresh=0.0, split='validation'):
     mRecs = run_mRec_eval(gt_filepath, pred_filepath, tiou_thresholds, score_thresh, dataset_name,
                     num_workers=8, split=split)
-    
     return mRecs
 
-if __name__ == '__main__':
-    ## TODO. change dataset name & tiou for your use
-    tgt_dataset_name = 'thumos14'
-    tiou_thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
-    # tgt_dataset_name = 'anet13'
-    # tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-    # tgt_dataset_name = 'fineaction'
-    # tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-    # tgt_dataset_name = 'uk600'
-    # tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
-    
-    # tiou_thresholds = [0.5]
-    
-    gt_train_filepath = f'./data/{tgt_dataset_name}/annotations/training_tal.json'
-    gt_val_filepath = f'./data/{tgt_dataset_name}/annotations/validation_tal.json'
-    gt_K400_train_filepath = f'./data/{tgt_dataset_name}/annotations/training_K400_tal.json'
-    gt_K400_val_filepath = f'./data/{tgt_dataset_name}/annotations/validation_K400_tal.json'
-    gt_nonK400_train_filepath = f'./data/{tgt_dataset_name}/annotations/training_nonK400_tal.json'
-    gt_nonK400_val_filepath = f'./data/{tgt_dataset_name}/annotations/validation_nonK400_tal.json'
-    k400_overlap_filepath = f'/root/datasets/{tgt_dataset_name}/annotations/{tgt_dataset_name}_labels_overlapK400.csv'
-
-    ## thumos14 prediction
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0'
-    # pred_filepath = osp.join(pred_root_dir, 'proposal_CLIP_cls_TH_validation_tal_ema/thumos14_vifi_prop_K400_0_epoch_035.json')
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_all/thumos14_vifi_prop_all_0'
-    # pred_filepath = osp.join(pred_root_dir, 'proposal_CLIP_cls_TH_validation_tal_ema/thumos14_vifi_prop_all_0_epoch_035.json')
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_all/thumos14_vifi_prop_all_0'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/thumos14_vifi_prop_all_0_epoch_035.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_cls_all/thumos14_vifi_all_0'
-    # pred_filepath = osp.join(pred_root_dir, 'proposal_cls_validation_tal_ema/thumos14_vifi_all_0_epoch_035.json')
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_UKR100k-PL_K400/THk400_vifi_prop_k400_UKR100k-PL_6_th-0.05_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_TH_validation_tal_ema/THk400_vifi_prop_k400_UKR100k-PL_6_th-0.05_load_as_ema_epoch_004.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_7_th-0.10_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_TH_validation_tal_ema/THk400_vifi_prop_k400_UKR10k-PL_7_th-0.10_load_as_ema_epoch_006.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_10_th-0.10_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_TH_validation_tal_ema/THk400_vifi_prop_k400_UKR10k-PL_10_th-0.10_load_as_ema_epoch_007.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_min-1_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_TH_validation_tal_ema/thumos14_vifi_prop_nonK400_PL_1_th-0.05_min-1_load_as_ema_epoch_015.json'
-    pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.20_load_as_ema'
-    pred_filename = 'proposal_CLIP_cls_TH_validation_tal_ema/TH_vifi_prop_K400_FA-PL_5_th-0.20_load_as_ema_epoch_010.json'
-    
-    ## fineaction prediction
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_all/fineaction_vifi_prop_all_1'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/fineaction_vifi_prop_all_1_epoch_015.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/fineaction_vifi_prop_K400_1_epoch_015.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema_epoch_010.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_fusion-c_only_FA_validation_tal_ema/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema_epoch_010.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/fineaction_vifi_prop_nonK400_PL_5_th-0.30_epoch_010.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH2FA_agn_all/TH2FA_vifi_prop_all_PL_5_th-0.30_load_as_ema/'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/TH2FA_vifi_prop_all_PL_5_th-0.30_load_as_ema_epoch_010.json'
-    # pred_root_dir = '/root/code/actionformer-prop/opental_eval'
-    # pred_filename = 'proposal_CLIP_cls_TH_validation_tal/opental_final.json'
-    # pred_root_dir = '/root/code/actionformer-prop/opental_eval'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/opental_epoch-19.json'
-    # pred_root_dir = '/root/code/actionformer-prop/opental_TH2FA_eval'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/opental_final.json'
-    
-    ## fineaction with random prediction
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_UKR5k-PL_K400/FAk400_vifi_prop_k400_UKR5k-PL_5_th-0.40_load_as_ema/'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/FAk400_vifi_prop_k400_UKR5k-PL_5_th-0.40_load_as_ema_epoch_010.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt//FA_agn_UKR10k-PL_K400/FAk400_vifi_prop_k400_UKR10k-PL_5_th-0.40_load_as_ema/'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/FAk400_vifi_prop_k400_UKR10k-PL_5_th-0.40_load_as_ema_epoch_010.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_UKR50k-PL_K400/FAk400_vifi_prop_k400_UKR50k-PL_7_th-0.40_load_as_ema/'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/FAk400_vifi_prop_k400_UKR50k-PL_7_th-0.40_load_as_ema_epoch_006.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_UKR100k-PL_K400/FAk400_vifi_prop_k400_UKR100k-PL_6_th-0.40_load_as_ema/'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/FAk400_vifi_prop_k400_UKR100k-PL_6_th-0.40_load_as_ema_epoch_004.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_UKR200k-PL_K400/FAk400_vifi_prop_k400_UKR200k-PL_8_th-0.40_load_as_ema/'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/FAk400_vifi_prop_k400_UKR200k-PL_8_th-0.40_load_as_ema_epoch_002.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_UKall-PL_K400/FAk400_vifi_prop_k400_UKall-PL_8_th-0.40_load_as_ema/'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/FAk400_vifi_prop_k400_UKall-PL_8_th-0.40_load_as_ema_epoch_002.json'
-    
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_7_th-0.05_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/THk400_vifi_prop_k400_UKR10k-PL_7_th-0.05_load_as_ema_epoch_006.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_10_th-0.10_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/THk400_vifi_prop_k400_UKR10k-PL_10_th-0.10_load_as_ema_epoch_007.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_UKR100k-PL_K400/THk400_vifi_prop_k400_UKR100k-PL_6_th-0.05_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/THk400_vifi_prop_k400_UKR100k-PL_6_th-0.05_load_as_ema_epoch_004.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/thumos14_vifi_prop_K400_0_epoch_035.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.20_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_FA_validation_tal_ema/TH_vifi_prop_K400_FA-PL_5_th-0.20_load_as_ema_epoch_010.json'
-    
-    # ## fineaction pseudo labels
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema/'
-    # pred_filename = 'pseudo_labels/training_T-FA-K400_E-FA-nonK400_th-0.10.json'
-    
-    
-    ## anet13 prediction
-    # pred_root_dir = '/root/code/actionformer-prop/opental_eval_768'
-    # pred_filename = 'proposal_CLIP_cls_AN_validation_tal_ema/opental_final.json'
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/AN_agn_PL_K400/anet13_vifi_prop_nonK400_PL_6_th-0.20_load_as_ema'
-    # pred_filename = 'proposal_CLIP_cls_AN_validation_tal_ema/anet13_vifi_prop_nonK400_PL_6_th-0.20_load_as_ema_epoch_010.json'
-    
-    # ## UK600 prediction
-    # pred_root_dir = '/root/code/actionformer-prop/ckpt/AN_agn_all/anet13_vifi_prop_all_3'
-    # pred_filename = 'proposal_CLIP_cls_UK600_validation_tal_ema/anet13_vifi_prop_all_3_epoch_015.json'
-    
-    pred_filepath = osp.join(pred_root_dir, pred_filename)
-    metric_filename = pred_filename.replace('proposal_', 'metric_').replace('.json', '.csv')
-    metric_filepath = osp.join(pred_root_dir, metric_filename)
-    # metric_filepath = pred_filepath.replace('proposal_', 'metric_').replace('.json', '.csv')
-    # metric_filepath = pred_filepath.replace('pseudo_labels', 'metric_PL').replace('.json', '.csv')
-
-    eval_k400_overlap = True
-    # eval_k400_non_overlap = False
-    eval_k400_non_overlap = True
-    tgt_cls_arr = None
-    overlap_text = 'all'
-    if eval_k400_overlap or eval_k400_non_overlap:
-        k400_overlap_df = pd.read_csv(k400_overlap_filepath)
-        tgt_cls_arr = k400_overlap_df['k400_overlap'].values
-    if eval_k400_overlap:
-        overlap_text = 'all_K400'
-        metric_filepath = metric_filepath.replace('.csv', f'_{overlap_text}.csv')
-    if eval_k400_non_overlap:
-        tgt_cls_arr = ~tgt_cls_arr
-        overlap_text = 'all_nonK400'
-        metric_filepath = metric_filepath.replace('.csv', f'_{overlap_text}.csv')
-
-
-    mAPs = eval_mAP(tgt_dataset_name, gt_val_filepath, pred_filepath, tgt_cls_arr=tgt_cls_arr)
-
+def eval_and_save(dataset, gt_filepath, pred_filepath, tgt_cls_arr, tiou_thresholds):
+    mAPs = eval_mAP(dataset, gt_filepath, pred_filepath, tgt_cls_arr=tgt_cls_arr)
     results_dict = {'split_name': overlap_text,
                 **{f"mAP@{tiou}": mAPs[i] for i, tiou in enumerate(tiou_thresholds)},
                 'mAP@avg': mAPs.mean()
                 }
-
+    print(results_dict)
     print(f"Save --- {metric_filepath}")
+    os.makedirs(osp.dirname(metric_filepath), exist_ok=True)
     pd.DataFrame(results_dict, index=[0]).to_csv(metric_filepath, index=False)
-    print("Save", metric_filepath)
+
+
+if __name__ == '__main__':
+    '''
+        ##### Cross category evaluation example: trained on fineaction wo ST
+        pred_dataset="fineaction"
+        ckpt_dir="ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1/"
+        pred_filename_all="proposal_CLIP_cls_FA_validation_tal_ema/fineaction_vifi_prop_K400_1_epoch_015.json"
+        pred_filename_k400="proposal_CLIP_cls_FA_validation_K400_tal_ema/fineaction_vifi_prop_K400_1_epoch_015.json"
+        pred_filename_nonk400="proposal_CLIP_cls_FA_validation_nonK400_tal_ema/fineaction_vifi_prop_K400_1_epoch_015.json"
+        python eval_script.py --pred_dataset ${pred_dataset} --ckpt_dir ${ckpt_dir} --pred_filename ${pred_filename_all} --pred_subset all --eval_subset all
+        python eval_script.py --pred_dataset ${pred_dataset} --ckpt_dir ${ckpt_dir} --pred_filename ${pred_filename_all} --pred_subset all --eval_subset k400
+        python eval_script.py --pred_dataset ${pred_dataset} --ckpt_dir ${ckpt_dir} --pred_filename ${pred_filename_all} --pred_subset all --eval_subset nonk400
+        python eval_script.py --pred_dataset ${pred_dataset} --ckpt_dir ${ckpt_dir} --pred_filename ${pred_filename_k400} --pred_subset k400 --eval_subset all
+        python eval_script.py --pred_dataset ${pred_dataset} --ckpt_dir ${ckpt_dir} --pred_filename ${pred_filename_nonk400} --pred_subset nonk400 --eval_subset all
+    '''
+    
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("--pred_dataset", choices=["thumos14", "anet13", "fineaction", "uk600"], required=True)
+    argparser.add_argument("--pred_subset", choices=["all", "k400", "nonk400"], required=True)
+    argparser.add_argument("--eval_subset", choices=["all", "k400", "nonk400"], required=False, default="all")
+    argparser.add_argument("--ckpt_dir", required=True, help="predicted model's ckpt dir")
+    argparser.add_argument("--pred_filename", required=True, help="path relative ckpt_dir")
+    args = argparser.parse_args()
+
+    dataset = args.pred_dataset
+    pred_subset = args.pred_subset
+    eval_subset = args.eval_subset
+    ckpt_dir = args.ckpt_dir
+    pred_filename = args.pred_filename
+
+    ## Set GT filepath based on the predefined pattern
+    gt_all_train_filepath = f'./data/{dataset}/annotations/training_tal.json'
+    gt_all_val_filepath = f'./data/{dataset}/annotations/validation_tal.json'
+    gt_K400_train_filepath = f'./data/{dataset}/annotations/training_K400_tal.json'
+    gt_K400_val_filepath = f'./data/{dataset}/annotations/validation_K400_tal.json'
+    gt_nonK400_train_filepath = f'./data/{dataset}/annotations/training_nonK400_tal.json'
+    gt_nonK400_val_filepath = f'./data/{dataset}/annotations/validation_nonK400_tal.json'
+    k400_overlap_filepath = f'./data/{dataset}/annotations/{dataset}_labels_overlapK400.csv'
+
+    if pred_subset == "all":
+        gt_filepath = gt_all_val_filepath
+    elif pred_subset == "k400":
+        gt_filepath = gt_K400_val_filepath
+    elif pred_subset == "nonk400":
+        gt_filepath = gt_nonK400_val_filepath
+    
+    ## Set tiou threshold set
+    tiou_thresholds_set_1 = [0.3, 0.4, 0.5, 0.6, 0.7]
+    tiou_thresholds_set_2 = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+    tiou_thresholds_set_mapper = {
+        "thumos14": tiou_thresholds_set_1,
+        "anet13": tiou_thresholds_set_2,
+        "fineaction": tiou_thresholds_set_2,
+        "uk600": tiou_thresholds_set_2,
+    }
+    tiou_thresholds = tiou_thresholds_set_mapper[dataset]
+    # tiou_thresholds = [0.5]
+
+    ## Set filepath
+    pred_filepath = osp.join(ckpt_dir, pred_filename)
+    metric_filename = pred_filename.replace('proposal_', 'metric_').replace('.json', '.csv')
+    metric_filepath = osp.join(ckpt_dir, metric_filename)
+
+    ## Set target eval subset metadata
+    tgt_cls_arr = None
+    overlap_text = 'all'
+    if eval_subset != "all":
+        k400_overlap_df = pd.read_csv(k400_overlap_filepath)
+        tgt_cls_arr = k400_overlap_df['k400_overlap'].values
+        overlap_text = 'all_K400'
+        if eval_subset == "nonk400":
+            tgt_cls_arr = ~tgt_cls_arr
+            overlap_text = 'all_nonK400'
+        metric_filepath = metric_filepath.replace('.csv', f'_{overlap_text}.csv')
+
+    eval_and_save(dataset, gt_filepath, pred_filepath, tgt_cls_arr, tiou_thresholds)

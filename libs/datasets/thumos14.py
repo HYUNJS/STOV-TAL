@@ -129,7 +129,8 @@ class THUMOS14Dataset(Dataset):
                 score_list = []
                 for row in results:
                     segm_list.append(row['segment'])
-                    score_list.append(row['actionness'])
+                    # score_list.append(row['actionness'])
+                    score_list.append(row['score'])
 
                 proposal_per_vid = {'video_id': vid, 
                                     'segments': torch.tensor(np.stack(segm_list), dtype=torch.float32), 

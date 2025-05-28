@@ -3,7 +3,6 @@ train_split: ['training']
 val_split: ['validation']
 dataset: {
   json_file: ./data/fineaction/annotations/validation_K400_tal.json,
-  # json_file: ./data/fineaction/annotations/validation_nonK400_tal.json,
   feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
   class_agnostic: False,
   file_prefix: ~,
@@ -23,12 +22,8 @@ CLIP: {
   weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
   ## inference details
   softmax: True,
-#  softmax: False,
   topk: 1,
-#  topk: 2,
-#  nms: False,
   nms: True,
-  # fusion: 'art_mean',
 }
 model: {
   fpn_type: identity,
@@ -70,5 +65,6 @@ output_folder: ./ckpt/FA_agn_K400
 # ckpt_folder: ./ckpt/FA_agn_UKR100k-PL-ST2_K400/FAk400_vifi_prop_k400_UKR100k-PL-ST2_6_th-0.40_load_as_ema/
 # ckpt_folder: ./ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_7_th-0.10_load_as_ema/
 # ckpt_folder: ./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0/
-ckpt_folder: ./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_min-1_load_as_ema/
+# ckpt_folder: ./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_min-1_load_as_ema/
+ckpt_folder: ./ckpt/TH_agn_all/thumos14_vifi_prop_all_0/
 

@@ -1,10 +1,12 @@
 import math
 import pandas as pd
+from collections import OrderedDict
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torchvision.ops import roi_align
+import einops
 
 from .models import register_meta_arch, make_backbone, make_neck, make_generator
 from .blocks import MaskedConv1D, Scale, LayerNorm
@@ -12,7 +14,7 @@ from .losses import ctr_diou_loss_1d, sigmoid_focal_loss
 
 from ..utils import batched_nms
 from ..clip import load_clip_to_cpu, PromptLearner, TextEncoder, tokenize
-
+from ..viclip import get_viclip
 
 def score_fusion(fusion_type, action_scores, class_scores):
     if fusion_type == 'a_only':
@@ -29,8 +31,46 @@ def score_fusion(fusion_type, action_scores, class_scores):
         raise NotImplementedError(f"Fusion type {fusion_type} is not yet implemented")
     
     return final_scores
-    
-    
+
+class QuickGELU(nn.Module):
+    def forward(self, x: torch.Tensor):
+        return x * torch.sigmoid(1.702 * x)
+
+class ResidualAttentionBlock(nn.Module):
+    def __init__(self, d_model: int, n_head: int, dropout: float, attn_mask: torch.Tensor = None):
+        super().__init__()
+
+        self.attn = nn.MultiheadAttention(d_model, n_head, dropout=dropout)
+        self.ln_1 = nn.LayerNorm(d_model)
+
+        self.mlp = nn.Sequential(OrderedDict([
+            ("c_fc", nn.Linear(d_model, d_model * 4)),
+            ("gelu", QuickGELU()),
+            ("c_proj", nn.Linear(d_model * 4, d_model))
+        ]))
+        self.ln_2 = nn.LayerNorm(d_model)
+        self.attn_mask = attn_mask
+
+    def attention(self, x: torch.Tensor):
+        self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
+        return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
+
+    def forward(self, x: torch.Tensor):
+        x = x + self.attention(self.ln_1(x))
+        x = x + self.mlp(self.ln_2(x))
+        return x
+
+class TemporalModelling(nn.Module):
+    def __init__(self, width: int, layers: int, heads: int, dropout: float = 0.0, attn_mask: torch.Tensor = None):
+        super(TemporalModelling, self).__init__()
+        
+        self.width = width
+        self.layers = layers
+        self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, dropout, attn_mask) for _ in range(layers)])
+
+    def forward(self, x: torch.Tensor):
+        return self.resblocks((x))
+
 class PtTransformerClsHead(nn.Module):
     """
     1D Conv heads for classification
@@ -349,6 +389,17 @@ class PtTransformer(nn.Module):
         self.CLIP_topk = CLIP_cfg['topk']
         self.CLIP_nms = CLIP_cfg['nms']
         self.CLIP_fusion = CLIP_cfg['fusion']
+        self.is_viclip = 'viclip' in CLIP_weight.lower()
+        self.temp_roi_size = CLIP_cfg['temp_roi_size']
+        
+        ## EffPrompt config
+        self.effprompt_weight_path = CLIP_cfg['effprompt']['weight']
+        self.load_effPrompt = self.effprompt_weight_path != ""
+        self.effp_tfmL = CLIP_cfg['effprompt']['tfm_layers']
+        self.effp_num_prompt = CLIP_cfg['effprompt']['num_prompt']        
+        self.effp_temporal_flag = self.load_effPrompt and self.effp_tfmL > 0
+        self.effp_text_flag = self.load_effPrompt and self.effp_num_prompt > 0
+            
         if self.CLIP_cls:
             prompt_n_ctx = CLIP_cfg['prompt_n_ctx']
             self.set_cls_names(dataset_name, split_name)
@@ -359,16 +410,40 @@ class PtTransformer(nn.Module):
             self.logit_scale = clip_model.logit_scale
 
         if self.CLIP_inf_only:
-            clip_model = load_clip_to_cpu(CLIP_backbone_name, CLIP_weight).to(torch.float)
-            token_embedding = clip_model.token_embedding
-            text_encoder = TextEncoder(clip_model)
-            logit_scale = clip_model.logit_scale
-            self.token_embedding = token_embedding
-            self.text_encoder = text_encoder
-            self.register_buffer('logit_scale', logit_scale, persistent=False)
-            self.register_buffer('text_cls_head', None, persistent=False)
             self.cls_name_list = []
+            if self.is_viclip:
+                tgt_name = "ViCLIP-"
+                clip_model_size = CLIP_weight[CLIP_weight.find(tgt_name)+len(tgt_name)].lower()
+                clip_model = get_viclip(clip_model_size, CLIP_weight)
+                self.text_encoder = clip_model['viclip'].text_encoder
+                logit_scale = nn.Parameter(torch.log(torch.ones([]) * 100))
+                # logit_scale = nn.Parameter(torch.log(torch.ones([]) * 1))
+                self.register_buffer('logit_scale', logit_scale, persistent=False)
+                self.register_buffer('text_cls_head', None, persistent=False)
+            else:
+                clip_model = load_clip_to_cpu(CLIP_backbone_name, CLIP_weight).to(torch.float)
+                token_embedding = clip_model.token_embedding
+                text_encoder = TextEncoder(clip_model)
+                logit_scale = clip_model.logit_scale
+                self.token_embedding = token_embedding
+                self.text_encoder = text_encoder
+                self.register_buffer('logit_scale', logit_scale, persistent=False)
+                self.register_buffer('text_cls_head', None, persistent=False)
 
+        if self.load_effPrompt:
+            if self.effp_text_flag:
+                self.effp_embedding = torch.nn.Embedding(77, CLIP_dim)
+            if self.effp_temporal_flag:
+                self.effp_temporalEmbedding = torch.nn.Embedding(self.temp_roi_size, CLIP_dim)
+                self.effp_temporalModelling = TemporalModelling(width=CLIP_dim, layers=self.effp_tfmL, 
+                                                                heads=CLIP_cfg['effprompt']['tfm_heads'])
+
+            ## load ckpt
+            effp_weight = torch.load(self.effprompt_weight_path, map_location="cpu")
+            effp_weight_renamed = {f"effp_{k}": effp_weight[k] for k in effp_weight.keys()}
+            effp_unexpected_keys = self.load_state_dict(effp_weight_renamed, strict=False)[1]
+            print("[Loading EffPrompt] unexpected keys:", effp_unexpected_keys)
+            
         # classfication and regerssion heads
         self.cls_head = PtTransformerClsHead(
             fpn_dim, head_dim, self.num_classes,
@@ -407,10 +482,29 @@ class PtTransformer(nn.Module):
 
     @torch.no_grad()
     def set_CLIP_classifier(self, cls_name_list):
-        cls_name_tokens = tokenize(cls_name_list).to(self.device)  # n_cls x 77
-        embedding = self.token_embedding(cls_name_tokens).type(torch.float).to(self.device) # n_cls x 77 x D
-        text_feats = self.text_encoder(embedding, cls_name_tokens)
-        text_feats = F.normalize(text_feats, dim=-1)
+        if self.is_viclip:
+            embedding = self.text_encoder.tokenize(cls_name_list, self.text_encoder.context_length).to(self.device)
+            text_feats = self.text_encoder(embedding)
+            text_feats = F.normalize(text_feats, dim=-1)
+        else:
+            cls_name_tokens = tokenize(cls_name_list).to(self.device)  # n_cls x 77
+            embedding = self.token_embedding(cls_name_tokens).type(torch.float).to(self.device) # n_cls x 77 x D
+            if self.effp_text_flag:
+                new_emb = self.effp_embedding(torch.arange(77).to(self.device))[None, :].repeat((len(cls_name_list), 1, 1))
+                new_emb[:, 0] = embedding[0, 0] # replace by start token
+                new_tokens = torch.zeros_like(cls_name_tokens)
+                new_tokens[:, 0] = cls_name_tokens[:, 0]
+                end_idxs = torch.argmax(cls_name_tokens, -1)
+                for i, end_idx in enumerate(end_idxs):
+                    new_emb[i, self.effp_num_prompt+1:self.effp_num_prompt+end_idx] = embedding[i, 1:end_idx]
+                    new_emb[i, self.effp_num_prompt+end_idx+self.effp_num_prompt] = embedding[i, end_idx]
+                    new_tokens[i, self.effp_num_prompt+1:self.effp_num_prompt+end_idx] = cls_name_tokens[i, 1:end_idx]
+                    new_tokens[i, self.effp_num_prompt+end_idx+self.effp_num_prompt] = cls_name_tokens[i, end_idx]
+                embedding = new_emb
+                cls_name_tokens = new_tokens
+            
+            text_feats = self.text_encoder(embedding, cls_name_tokens)
+            text_feats = F.normalize(text_feats, dim=-1)
         self.text_cls_head = text_feats
         self.cls_name_list = cls_name_list
 
@@ -856,8 +950,22 @@ class PtTransformer(nn.Module):
 
             ## roi align features
             feats_ = feats.unsqueeze(0).unsqueeze(2)
-            roi_feats = roi_align(feats_, [bboxs], (1, 1), aligned=True).flatten(1, -1)
+            # roi_feats = roi_align(feats_, [bboxs], (1, self.temp_roi_size), aligned=True).flatten(1, -1)
+            roi_feats = roi_align(feats_, [bboxs], (1, self.temp_roi_size), aligned=True)
 
+            if self.load_effPrompt:
+                if self.effp_temporal_flag:
+                    roi_feats = einops.rearrange(roi_feats, "b c 1 t -> t b c")
+                    temporal_embs = self.effp_temporalEmbedding(torch.arange(self.temp_roi_size).to(self.device))
+                    temporal_embs = einops.repeat(temporal_embs, 't c -> t b c', b=roi_feats.size(1))
+                    roi_feats = roi_feats + temporal_embs
+                    roi_feats = self.effp_temporalModelling(roi_feats)
+                    roi_feats = roi_feats.mean(dim=0) # [b, c]
+                else:
+                    roi_feats = roi_feats.mean(dim=-1).squeeze(-1) # [b, c]
+            else:
+                roi_feats = roi_feats.flatten(1, -1)
+            
             ## compute cls scores - N x C
             roi_feats = F.normalize(roi_feats, dim=-1)
             cos_sim = torch.einsum('T D, C D -> T C', roi_feats, self.text_cls_head)

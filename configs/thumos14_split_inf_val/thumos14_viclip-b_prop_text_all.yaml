@@ -1,0 +1,64 @@
+dataset_name: thumos14
+train_split: ['training']
+val_split: ['validation']
+dataset: {
+  json_file: ./data/thumos14/annotations/validation_tal.json,
+  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_viclip-b_trainval,
+  class_agnostic: False,
+  file_prefix: ~,
+  file_ext: .npy,
+  num_classes: 1,
+  input_dim: 512,
+  feat_stride: 4,
+  num_frames: 16,
+  # serve as data augmentation
+  trunc_thresh: 0.5,
+  crop_ratio: [0.9, 1.0],
+  max_seq_len: 2304,
+  default_fps: 30,
+}
+CLIP: {
+  inf_only: True,
+  weight: "./checkpoints/viclip/ViCLIP-B_InternVid-FLT-10M.pth",
+  ## inference details
+  softmax: True,
+  topk: 1,
+  nms: True,
+  # fusion: 'a_only'
+}
+model: {
+  fpn_type: identity,
+  max_buffer_len_factor: 6.0,
+  n_mha_win_size: 19,
+}
+loader: {
+  batch_size: 2,
+  num_workers: 4,
+}
+test_cfg: {
+#  load_ema: False,
+  nms_method: 'none',
+  voting_thresh: 0.7,
+  pre_nms_topk: 2000,
+  max_seg_num: 200,
+  min_score: 0.001,
+  # when using external scores, our model is generating "proposals"
+  # multiclass_nms: False,
+  # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
+  # comment out L47-48 and uncomment L50 to disable score fusion
+  multiclass_nms: False,
+}
+# ckpt_folder: ./ckpt/path_to_ckpt
+# ckpt_folder: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0"
+#ckpt_folder: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0_ema"
+#ckpt_folder: "./ckpt/TH_agn_all/thumos14_vifi_prop_all_0"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_0"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_ema_as_ema/"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_ema_as_all/"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_dup-0.50_load_ema_as_ema/"
+#ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_dup-0.50_load_all/"
+# ckpt_folder: "./ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.30_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.05_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_6_th-0.20_load_as_ema/"
+ckpt_folder: "./ckpt/TH_agn_K400/thumos14_viclip-b_prop_K400_0/"

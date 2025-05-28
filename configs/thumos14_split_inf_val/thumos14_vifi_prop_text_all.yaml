@@ -57,7 +57,7 @@ test_cfg: {
   multiclass_nms: False,
 }
 # ckpt_folder: ./ckpt/path_to_ckpt
-#ckpt_folder: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0"
+# ckpt_folder: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0"
 #ckpt_folder: "./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0_ema"
 #ckpt_folder: "./ckpt/TH_agn_all/thumos14_vifi_prop_all_0"
 #ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_0"
@@ -68,4 +68,8 @@ test_cfg: {
 #ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_dup-0.50_load_all/"
 # ckpt_folder: "./ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.30_load_as_ema/"
 # ckpt_folder: "./ckpt/TH_agn_PL_K400/TH_vifi_prop_K400_FA-PL_5_th-0.05_load_as_ema/"
-ckpt_folder: "./ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_6_th-0.20_load_as_ema/"
+# ckpt_folder: "./ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_6_th-0.20_load_as_ema/"
+# ckpt_folder: "./ckpt/FA_agn_UKall-PL_K400/FAk400_vifi_prop_k400_UKall-PL_8_th-0.40_load_as_ema"
+# ckpt_folder: "./ckpt/FA_agn_UKall-PL_K400/FAk400_vifi_prop_k400_UKall-PL_8_th-0.40_load_as_ema"
+# ckpt_folder: "./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1"
+ckpt_folder: "./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema"

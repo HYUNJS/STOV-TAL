@@ -1,0 +1,71 @@
+dataset_name: thumos14
+train_split: ['training']
+val_split: ['validation']
+dataset: {
+  json_file: ./data/thumos14/annotations/validation_nonK400_tal.json,
+  feat_folder: ./data/thumos14/vificlip_feats/F16_w16F_s4F_clip_trainval,
+  class_agnostic: False,
+  file_prefix: ~,
+  file_ext: .npy,
+  num_classes: 1,
+  input_dim: 512,
+  feat_stride: 4,
+  num_frames: 16,
+  # serve as data augmentation
+  trunc_thresh: 0.5,
+  crop_ratio: [0.9, 1.0],
+  max_seq_len: 2304,
+  default_fps: 30,
+}
+CLIP: {
+  inf_only: True,
+  ## inference details
+  softmax: True,
+  topk: 1,
+  nms: True,
+  temp_roi_size: 16,
+  effprompt: {
+    weight: "./checkpoints/effprompt/effprompt_TH14_vifi_tfmL-1_prompt-16X16.pth.tar",
+    num_prompt: 16,
+    tfm_layers: 1,
+    # weight: "./checkpoints/effprompt/effprompt_TH14_vifi_tfmL-1_prompt-0X0.pth.tar",
+    # num_prompt: 0,
+    # tfm_layers: 1,
+    # weight: "./checkpoints/effprompt/effprompt_TH14_vifi_tfmL-0_prompt-16X16.pth.tar",
+    # num_prompt: 16,
+    # tfm_layers: 0,
+  }
+}
+model: {
+  fpn_type: identity,
+  max_buffer_len_factor: 6.0,
+  n_mha_win_size: 19,
+}
+opt: {
+  learning_rate: 0.0001,
+  # eta_min: 0.0001, # 1e-8
+  epochs: 30,
+  warmup_epochs: 5,
+  weight_decay: 0.05,
+}
+loader: {
+  batch_size: 2,
+  num_workers: 4,
+}
+test_cfg: {
+#  load_ema: False,
+  nms_method: 'none',
+  voting_thresh: 0.7,
+  pre_nms_topk: 2000,
+  max_seg_num: 200,
+  min_score: 0.001,
+  # when using external scores, our model is generating "proposals"
+  # multiclass_nms: False,
+  # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
+  # comment out L47-48 and uncomment L50 to disable score fusion
+  multiclass_nms: False,
+}
+# ckpt_folder: ./ckpt/path_to_ckpt
+ckpt_folder: "./ckpt/TH_agn_K400/thumos14_clip_prop_K400_0_effP_vis-1_text-16"
+# ckpt_folder: "./ckpt/TH_agn_K400/thumos14_clip_prop_K400_0_effP_vis-1_text-0"
+# ckpt_folder: "./ckpt/TH_agn_K400/thumos14_clip_prop_K400_0_effP_vis-0_text-16"

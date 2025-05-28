@@ -145,6 +145,10 @@ def main(args):
 
     proposal_filepath = os.path.join(output_dirpath, proposal_dirname, proposal_filename)
     metric_filepath = os.path.join(output_dirpath, metric_dirname, proposal_filename.replace('.json', '.csv'))
+    metric_filepath = f"{metric_filepath}" # viclip - temp=100
+    # metric_filepath = f"{metric_filepath}.v2" # viclip - temp=100
+    # metric_filepath = f"{metric_filepath}.v3" # viclip - temp=1
+    # metric_filepath = f"{metric_filepath}.v4" # viclip - act_only
     os.makedirs(os.path.dirname(proposal_filepath), exist_ok=True)
     os.makedirs(os.path.dirname(metric_filepath), exist_ok=True)
 
@@ -185,6 +189,7 @@ def main(args):
     elif dataset_name == 'fineaction':
         # tiou_thresholds = [0.5, 0.75, 0.95]
         tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
+        # tiou_thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
     elif dataset_name == 'uk600':
         tiou_thresholds = [0.5, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95]
     else:

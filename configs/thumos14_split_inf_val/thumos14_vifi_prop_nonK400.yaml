@@ -36,5 +36,6 @@ test_cfg: {
 }
 output_folder: ./ckpt/TH_agn_K400
 #ckpt_folder: ./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0
-ckpt_folder: ./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0_ema
+# ckpt_folder: ./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0_ema
 #ckpt_folder: "./ckpt//TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_load_as_ema/"
+ckpt_folder: "./ckpt/TH_agn_PL_K400/thumos14_vifi_prop_nonK400_PL_1_th-0.05_min-1_load_as_ema"

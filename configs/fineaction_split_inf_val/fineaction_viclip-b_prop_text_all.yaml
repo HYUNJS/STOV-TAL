@@ -1,0 +1,73 @@
+dataset_name: fineaction
+train_split: ['training']
+val_split: ['validation']
+dataset: {
+  json_file: ./data/fineaction/annotations/validation_tal.json,
+  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_viclip-b_trainval,
+  class_agnostic: False,
+  file_prefix: ~,
+  file_ext: .npy,
+  num_classes: 1,
+  input_dim: 512,
+  feat_stride: 4,
+  num_frames: 16,
+  # serve as data augmentation
+  trunc_thresh: 0.5,
+  crop_ratio: [0.9, 1.0],
+  max_seq_len: 2304,
+  default_fps: 30,
+}
+CLIP: {
+  inf_only: True,
+  weight: "./checkpoints/viclip/ViCLIP-B_InternVid-FLT-10M.pth",
+  ## inference details
+  softmax: True,
+#  softmax: False,
+  topk: 1,
+#  topk: 2,
+#  nms: False,
+  nms: True,
+  # fusion: 'art_mean',
+}
+model: {
+  fpn_type: identity,
+  max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
+  n_mha_win_size: 19,
+}
+loader: {
+  batch_size: 4,
+  num_workers: 4,
+}
+test_cfg: {
+  nms_method: 'none',
+  voting_thresh: 0.7,
+  pre_nms_topk: 2000,
+  max_seg_num: 200,
+  min_score: 0.001,
+  # when using external scores, our model is generating "proposals"
+  # multiclass_nms: False,
+  # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
+  # comment out L47-48 and uncomment L50 to disable score fusion
+  multiclass_nms: False,
+}
+output_folder: ./ckpt/FA_agn_K400
+# ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1
+# ckpt_folder: ./ckpt/FA_agn_all/fineaction_vifi_prop_all_1
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_4_th-0.10_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.01_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_1_th-0.30_load_as_ema/
+# ckpt_folder: ./ckpt/TH2FA_agn_all/TH2FA_vifi_prop_all_PL_5_th-0.30_load_as_ema/
+# ckpt_folder: ./ckpt/TH2FA_agn_all/TH2FA_vifi_prop_all_PL_2_th-0.05_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.30_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.50_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_PL_K400/fineaction_vifi_prop_nonK400_PL_5_th-0.10/
+# ckpt_folder: ./ckpt/FA_agn_UKR10k-PL_K400/FAk400_vifi_prop_k400_UKR10k-PL_1_th-0.30_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_UKR10k-PL_K400/FAk400_vifi_prop_k400_UKR10k-PL_1_th-0.20_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_UKR10k-PL_K400/FAk400_vifi_prop_k400_UKR10k-PL_5_th-0.40_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_UKR5k-PL_K400/FAk400_vifi_prop_k400_UKR5k-PL_5_th-0.20_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_UKR50k-PL_K400/FAk400_vifi_prop_k400_UKR50k-PL_5_th-0.30_load_as_ema/
+# ckpt_folder: ./ckpt/FA_agn_UKR100k-PL-ST2_K400/FAk400_vifi_prop_k400_UKR100k-PL-ST2_6_th-0.40_load_as_ema/
+# ckpt_folder: ./ckpt/TH_agn_UKR10k-PL_K400/THk400_vifi_prop_k400_UKR10k-PL_7_th-0.10_load_as_ema/
+# ckpt_folder: ./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0/
+ckpt_folder: ./ckpt/FA_agn_K400/fineaction_viclip-b_prop_K400_1/
+

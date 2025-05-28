@@ -98,6 +98,13 @@ DEFAULTS = {
         "nms": False,
         "fusion": 'geo_mean', # 'a_only', 'c_only', 'art_mean', 'geo_mean'
         "ctx_init": "", # "a photo of a"
+        "temp_roi_size": 1,
+        "effprompt": {
+            "weight": "",
+            "num_prompt": 16,
+            "tfm_layers": 1,
+            "tfm_heads": 8,
+        }
     },
     # network architecture
     "model": {

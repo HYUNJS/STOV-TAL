@@ -4,6 +4,7 @@ checkpoints
 checkpoints/
 ckpt/
 ckpt_old/
+ckpt_tmp/
 pretrained/
 exp/
 eda/

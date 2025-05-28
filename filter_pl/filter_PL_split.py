@@ -1,9 +1,10 @@
-import os, json, argparse
+import os, json, argparse, sys
 import os.path as osp
-from libs.utils import run_mRec_eval
+sys.path.append(osp.join(osp.dirname(__file__), '../'))
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from libs.utils import run_mRec_eval
 
 
 split_50_list = [f'50-{i}' for i in range(10)]
@@ -156,6 +157,8 @@ def filter_props(tgt_prop_fliepath, save_path, model_cfg_name, score_thresh, top
     with open(save_filepath, 'w') as fp:
         json.dump({'results': new_results}, fp)
 
+    tiou_thresholds = [0.5]
+    _, _, _, metric_in_csv = run_mRec_eval(tgt_gt_filepath, save_filepath, tiou_thresholds, thresh, Edataset, split=subset, get_csv=True)
     return cfg_full_name
     # tiou_thresholds = [0.5]
     # thresh = 0.0
@@ -294,6 +297,7 @@ if __name__ == '__main__':
     python filter_PL_split.py --Tdataset thumos14 --Edataset fineaction --Tsplit all --Esplit all --subset training --model vifi 
     python filter_PL_split.py --Tdataset thumos14 --Edataset fineaction --Tsplit K400 --Esplit all --subset training --model vifi 
     python filter_PL_split.py --Tdataset fineaction --Edataset uk600 --Tsplit K400 --Esplit R10k --subset training --model vifi --thresh 0.1
+    python filter_pl/filter_PL_split.py --Tdataset thumos14 --Tsplit K400 --Esplit nonK400 --subset training --model viclip-b --train-ver 0 --train-ep 35 --thresh 0.05 --min-num 5
     '''
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--Tdataset")
@@ -332,7 +336,7 @@ if __name__ == '__main__':
     assert Tsplit in ['all', 'K400', 'nonK400', *split_50_list, *split_non50_list, *split_75_list, *split_non75_list, *split_random_list]
     assert Esplit in ['all', 'K400', 'nonK400', *split_50_list, *split_non50_list, *split_75_list, *split_non75_list, *split_random_list]
     assert subset in ['training', 'validation']
-    assert model in ['clip', 'vifi']
+    assert model in ['clip', 'vifi', 'viclip-b']
     short_dataset_name_dict = {'thumos14': 'TH', 'anet13': 'AN', 'fineaction': 'FA', 'uk600': 'UK600'}
     short_Tdataset_name = short_dataset_name_dict[Tdataset]
     short_Edataset_name = short_dataset_name_dict[Edataset]

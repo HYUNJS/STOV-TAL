@@ -1,0 +1,58 @@
+dataset_name: fineaction
+train_split: ['training']
+val_split: ['validation']
+dataset: {
+  json_file: ./data/fineaction/annotations/validation_nonK400_tal.json,
+  feat_folder: ./data/fineaction/vificlip_feats/F16_w16F_s4F_ep10_trainval,
+  class_agnostic: False,
+  file_prefix: ~,
+  file_ext: .npy,
+  num_classes: 1,
+  input_dim: 512,
+  feat_stride: 4,
+  num_frames: 16,
+  # serve as data augmentation
+  trunc_thresh: 0.5,
+  crop_ratio: [0.9, 1.0],
+  max_seq_len: 2304,
+  default_fps: 30,
+}
+CLIP: {
+  inf_only: True,
+  weight: "./checkpoints/vifi_clip/vifi_clip_10_epochs_k400_full_finetuned.pth",
+  ## inference details
+  softmax: True,
+  topk: 1,
+  nms: True,
+  temp_roi_size: 16,
+  effprompt: {
+    # weight: "./checkpoints/effprompt/effprompt_FA_vifi_tfmL-1_prompt-16X16.pth.tar",
+    weight: "./checkpoints/effprompt/effprompt_TH14_vifi_tfmL-1_prompt-16X16.pth.tar",
+    num_prompt: 16,
+    tfm_layers: 1,
+  }
+}
+model: {
+  fpn_type: identity,
+  max_buffer_len_factor: 28.0, # max: 56843 - 2048*28 = 57344
+  n_mha_win_size: 19,
+}
+loader: {
+  batch_size: 4,
+  num_workers: 4,
+}
+test_cfg: {
+  nms_method: 'none',
+  voting_thresh: 0.7,
+  pre_nms_topk: 2000,
+  max_seg_num: 200,
+  min_score: 0.001,
+  # when using external scores, our model is generating "proposals"
+  # multiclass_nms: False,
+  # ext_score_file: ./data/thumos/annotations/thumos14_cls_scores.pkl,
+  # comment out L47-48 and uncomment L50 to disable score fusion
+  multiclass_nms: False,
+}
+output_folder: ./ckpt/FA_agn_K400
+# ckpt_folder: ./ckpt/FA_agn_K400/fineaction_vifi_prop_K400_1_effP_vis-1_text-16/
+ckpt_folder: ./ckpt/TH_agn_K400/thumos14_vifi_prop_K400_0_effP_vis-1_text-16/
